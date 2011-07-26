@@ -2,7 +2,7 @@
 ############################################################################
 #
 #  This script provides a utility to show and modify a TODO file. The
-#  of the TODO file is specified in this script. 
+#  location the TODO file is specified in this script.
 #
 #  Copyright (C) 2011  Jason Graham <jgraha8@gmail.com>
 #
