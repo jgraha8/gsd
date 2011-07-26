@@ -263,8 +263,6 @@ function modify_entry_statement {
             if [ "$_tag" == "$_testtag" ]; then
                 _status=$(print_entry_status "$line")
                 _modified=1
-                echo $_tag
-                echo $_status
                 echo "$_tag:$_status: $_statement" >> .todo.tmp
             else
                 echo "$line" >> .todo.tmp
@@ -599,16 +597,16 @@ else
             ;;
         2)
             # Need to modify entry
-            [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status $STATUS $TAG
+            [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status "$STATUS" "$TAG"
             ;;
         3)
-            [ $TAG_SET -eq 1 ] && delete_entry $TAG
+            [ $TAG_SET -eq 1 ] && delete_entry "$TAG"
             ;;
         4)
             reorder_entry_tags
             ;;
         5)
-            [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" $TAG
+            [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" "$TAG"
             ;;
     esac
 
