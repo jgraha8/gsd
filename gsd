@@ -41,6 +41,7 @@ function print_usage_message {
     echo "    Options:"
     echo "      -a <statement>        Add entry"
     echo "      -s {-n|-i|-c} <tag>   Change status of entry"
+    echo "      -m <statement>        Change entry statement"
     echo "      -d <tag>              Delete entry"
     echo "      -r                    Reorder entry tags"
     echo " "
@@ -67,12 +68,12 @@ function print_entry_tag {
     echo $_tag
 }
 
-function print_entry_type {
+function print_entry_status {
     local _line="$1"
-    local _type
+    local _status
 
-    _type="`echo $_line | cut -d ':' -f 2`"
-    echo $_type
+    _status="`echo $_line | cut -d ':' -f 2`"
+    echo $_status
 }
 
 function print_entry_statement {
@@ -91,7 +92,7 @@ function print_entry_statement {
 function check_line_type {
     # This function uses special formatting rules of TODO
     local _line="$1"
-    local _type
+    local _status
     local _firstchar
     local _linelength=${#_line}
 
@@ -108,9 +109,9 @@ function check_line_type {
     fi
 
     # Considerd valid entry line
-    _type=$(print_entry_type "$_line")
+    _status=$(print_entry_status "$_line")
 
-    case $_type in
+    case $_status in
         "(NN)")
             return 1
             ;;
@@ -184,8 +185,8 @@ function print_last_entry_tag {
 
 function modify_entry_status {
 
-    local _tag="$1"
-    local _status="$2"
+    local _status="$1"
+    local _tag="$2"
     local _ltype
     local _testtag
     local _statement
@@ -230,6 +231,56 @@ function modify_entry_status {
 
 }
 
+function modify_entry_statement {
+
+    local _statement="$1"
+    local _tag="$2"
+    local _ltype
+    local _testtag
+    local _status
+
+    local _modified
+
+    _modified=0
+
+ 
+    rm -f .todo.tmp
+    touch .todo.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        if [ $_ltype -eq 0 ]; then
+            echo "$line" >> .todo.tmp
+        else
+            # Check if this is our tag
+            _testtag=$(print_entry_tag "$line")
+
+            if [ "$_tag" == "$_testtag" ]; then
+                _status=$(print_entry_status "$line")
+                _modified=1
+                echo $_tag
+                echo $_status
+                echo "$_tag:$_status: $_statement" >> .todo.tmp
+            else
+                echo "$line" >> .todo.tmp
+            fi
+
+        fi
+
+    done < $TODOFILE
+
+    [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+
+    mv .todo.tmp $TODOFILE
+    return 0
+
+}
+
 function delete_entry {
 
     local _tag="$1"
@@ -257,8 +308,6 @@ function delete_entry {
             if [ "$_tag" == "$_testtag" ]; then
                 _deleted=1
             else
-                #_counter=$((_counter+1))
-                #echo "$_counter:$_type: $_statement" >> .todo.tmp
                 echo "$line" >> .todo.tmp
             fi
 
@@ -266,9 +315,7 @@ function delete_entry {
 
     done < $TODOFILE
 
-    if [ $_deleted -ne 1 ]; then
-        print_error_message "specified tag not found"
-    fi
+    [ $_deleted -ne 1 ] && print_error_message "specified tag not found"
 
     mv .todo.tmp $TODOFILE
 
@@ -295,14 +342,13 @@ function reorder_entry_tags {
         check_line_type "$line"
         _ltype=$?
 
-
         if [ $_ltype -eq 0 ]; then
             echo "$line" >> .todo.tmp
         else
 
             # Check if this is our tag
             _tag=$((_tag+1))
-            _status=$(print_entry_type "$line")
+            _status=$(print_entry_status "$line")
             _statement=$(print_entry_statement "$line")
             echo "$_tag:$_status: $_statement" >> .todo.tmp
 
@@ -424,6 +470,7 @@ else
 
             fi
             ;;
+            
 
         "-d")
 
@@ -446,6 +493,23 @@ else
                 ETYPE=4
             fi
             ;;
+
+        "-m")
+            
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires two options"
+            else
+
+                ETYPE=5
+                STATEMENT=$3
+                TAG=$4
+
+                TAG_SET=1
+                STATEMENT_SET=1
+
+            fi
+            ;;
+
         "-h")
             print_usage_message
             ;;
@@ -535,13 +599,16 @@ else
             ;;
         2)
             # Need to modify entry
-            modify_entry_status $TAG $STATUS
+            [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status $STATUS $TAG
             ;;
         3)
-            delete_entry $TAG
+            [ $TAG_SET -eq 1 ] && delete_entry $TAG
             ;;
         4)
             reorder_entry_tags
+            ;;
+        5)
+            [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" $TAG
             ;;
     esac
 
