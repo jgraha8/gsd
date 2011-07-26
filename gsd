@@ -104,7 +104,7 @@ function check_line_type {
     if [ $_linelength -eq 0 ]; then
         # Treating as blank line
         return 0
-    elif [ "$_firstchar" == "#" ]; then
+    elif [[ "$_firstchar" == "#" ]]; then
         # Treating as a comment
         return 0
     fi
@@ -215,7 +215,7 @@ function modify_entry_status {
             # Check if this is our tag
             _testtag=$(print_entry_tag "$line")
 
-            if [ "$_tag" == "$_testtag" ]; then
+            if [[ "$_tag" == "$_testtag" ]]; then
                 _statement=$(print_entry_statement "$line")
                 _modified=1
                 echo "$_tag:$_status: $_statement" >> .todo.tmp
@@ -263,7 +263,7 @@ function modify_entry_statement {
             # Check if this is our tag
             _testtag=$(print_entry_tag "$line")
 
-            if [ "$_tag" == "$_testtag" ]; then
+            if [[ "$_tag" == "$_testtag" ]]; then
                 _status=$(print_entry_status "$line")
                 _modified=1
                 echo "$_tag:$_status: $_statement" >> .todo.tmp
@@ -306,7 +306,7 @@ function delete_entry {
             # Check if this is our tag
             _testtag=$(print_entry_tag "$line")
 
-            if [ "$_tag" == "$_testtag" ]; then
+            if [[ "$_tag" == "$_testtag" ]]; then
                 _deleted=1
             else
                 echo "$line" >> .todo.tmp
@@ -390,7 +390,7 @@ function toggle_important_flag {
             # Check if this is our tag
             _testtag=$(print_entry_tag "$line")
 
-            if [ "$_tag" == "$_testtag" ]; then
+            if [[ "$_tag" == "$_testtag" ]]; then
                 _status=$(print_entry_status "$line")
                 _statement=$(print_entry_statement "$line")
 
