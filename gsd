@@ -1,0 +1,552 @@
+#!/bin/bash
+############################################################################
+#
+#  This script provides a utility to show and modify a TODO file. The
+#  of the TODO file is specified in this script. 
+#
+#  Copyright (C) 2011  Jason Graham <jgraha8@gmail.com>
+#
+#  This file is part of todo
+#
+#  lesgo-tools is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  lesgo-tools is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with lesgo-tools.  If not, see <http://www.gnu.org/licenses/>.
+#
+############################################################################
+
+SCRIPTNAME=`basename "$0"`
+TODOFILE="/home/jgraham/jhu/research/TODO"
+
+function print_usage_message {
+    echo "Usage: $SCRIPTNAME command [command-options-and-arguments]"
+    echo "Commands:"
+    echo "  help                      Print this message"
+    echo " "
+    echo "  show                      Show TODO entries"
+    echo "    Options:"
+    echo "      -n                    Show only entries with status new"
+    echo "      -i                    Show only entries with status incomplete"
+    echo "      -c                    Show only entries with status complete"
+    echo " "
+    echo "  edit                      Edit TODO entries"
+    echo "    Options:"
+    echo "      -a <statement>        Add entry"
+    echo "      -s {-n|-i|-c} <tag>   Change statuse of entry"
+    echo "      -d <tag>              Delete entry"
+    echo "      -r                    Reorder entry tags"
+    echo " "
+    exit 0
+}
+
+function print_error_message {
+    echo "$SCRIPTNAME: $1"
+    exit -1
+}
+
+function print_entry {
+    echo ""
+    echo $1
+    return 0
+}
+
+
+function print_entry_tag {
+    local _line="$1"
+    local _tag
+
+    _tag="`echo $_line | cut -d ':' -f 1`"
+    echo $_tag
+}
+
+function print_entry_type {
+    local _line="$1"
+    local _type
+
+    _type="`echo $_line | cut -d ':' -f 2`"
+    echo $_type
+}
+
+function print_entry_statement {
+
+
+    # This function assumes that a valid line is provided
+    local  _line="$1"
+    local _statement
+
+    _statement="`echo $_line | cut -d ':' -f 3`"
+    echo $_statement
+
+}
+
+
+function check_line_type {
+    # This function uses special formatting rules of TODO
+    local _line="$1"
+    local _type
+    local _firstchar
+    local _linelength=${#_line}
+
+#    echo $_line
+
+    _firstchar=${_line::1}
+
+    if [ $_linelength -eq 0 ]; then
+        # Treating as blank line
+        return 0
+    elif [ "$_firstchar" == "#" ]; then
+        # Treating as a comment
+        return 0
+    fi
+
+    # Considerd valid entry line
+    _type=$(print_entry_type "$_line")
+
+    case $_type in
+        "(NN)")
+            return 1
+            ;;
+        "(II)")
+            return 2
+            ;;
+        "(CC)")
+            return 3
+            ;;
+        *)
+            print_error_message "line in TODO not formatted correctly"
+    esac
+
+}
+
+function print_entries {
+
+    local _stype=$1
+    local _ltype
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        case $_ltype in
+            0) # Blank line or comment
+                ;;
+            1) # new
+                [ $_stype -eq 1 -o $_stype -eq 0 ] && print_entry "$line"
+                ;;
+            2)
+                [ $_stype -eq 2 -o $_stype -eq 0 ] && print_entry "$line"
+                ;;
+            3)
+                [ $_stype -eq 3 -o $_stype -eq 0 ] && print_entry "$line"
+                ;;
+            *)
+                print_error_message "error on read"
+                ;;
+        esac
+
+    done < $TODOFILE
+
+}
+function print_last_entry_tag {
+
+    local _ltype
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        case $_ltype in
+            0) # Blank line or comment
+                ;;
+            [1-3])
+                TAG=$(print_entry_tag "$line")
+                ;;
+            *)
+                print_error_message "error on read"
+                ;;
+        esac
+
+    done < $TODOFILE
+
+    echo $TAG
+
+}
+
+function modify_entry_status {
+
+    local _tag="$1"
+    local _status="$2"
+    local _ltype
+    local _testtag
+    local _statement
+
+    local _modified
+
+    _modified=0
+
+    rm -f .todo.tmp
+    touch .todo.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        if [ $_ltype -eq 0 ]; then
+            # do nothing
+            echo "$line" >> .todo.tmp
+        else
+            # Check if this is our tag
+            _testtag=$(print_entry_tag "$line")
+
+            if [ "$_tag" == "$_testtag" ]; then
+                _statement=$(print_entry_statement "$line")
+                _modified=1
+                echo "$_tag:$_status: $_statement" >> .todo.tmp
+            else
+                echo "$line" >> .todo.tmp
+            fi
+
+        fi
+
+    done < $TODOFILE
+
+    [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+
+    mv .todo.tmp $TODOFILE
+    return 0
+
+}
+
+function delete_entry {
+
+    local _tag="$1"
+    local _ltype
+    local _testtag
+
+    local _deleted=0
+
+    rm -f .todo.tmp
+    touch .todo.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        if [ $_ltype -eq 0 ]; then
+            echo "$line" >> .todo.tmp
+        else
+            # Check if this is our tag
+            _testtag=$(print_entry_tag "$line")
+
+            if [ "$_tag" == "$_testtag" ]; then
+                _deleted=1
+            else
+                #_counter=$((_counter+1))
+                #echo "$_counter:$_type: $_statement" >> .todo.tmp
+                echo "$line" >> .todo.tmp
+            fi
+
+        fi
+
+    done < $TODOFILE
+
+    if [ $_deleted -ne 1 ]; then
+        print_error_message "specified tag not found"
+    fi
+
+    mv .todo.tmp $TODOFILE
+
+    return 0
+
+}
+
+function reorder_entry_tags {
+
+    local _status
+    local _statement
+    local _ltype
+
+    declare -i _tag
+
+    rm -f .todo.tmp
+    touch .todo.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    _tag=0
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+
+        if [ $_ltype -eq 0 ]; then
+            echo "$line" >> .todo.tmp
+        else
+
+            # Check if this is our tag
+            _tag=$((_tag+1))
+            _status=$(print_entry_type "$line")
+            _statement=$(print_entry_statement "$line")
+            echo "$_tag:$_status: $_statement" >> .todo.tmp
+
+        fi
+
+    done < $TODOFILE
+
+    mv .todo.tmp $TODOFILE
+
+    return 0
+
+}
+
+
+declare -i STYPE=0
+declare -i ETYPE=0
+declare -i ACTION=0
+
+declare -i TAG_SET=0
+declare -i STATUS_SET=0
+declare -i STATEMENT_SET=0
+
+NARGS=$#
+if [ $NARGS -lt 1 ]; then
+    print_error_message "action not specified"
+fi
+
+    # First argument should be the action
+case $1 in
+    "show")
+            ACTION=1
+            ;;
+    "edit")
+            ACTION=2
+            ;;
+    "-h" | "help")
+            print_usage_message
+            ;;
+    *)
+            print_error_message "action not specified correctly"
+            ;;
+esac
+
+    # Now handle suboptions
+if [ $ACTION -eq 1 ]; then
+
+    if [ $NARGS -gt 1 ]; then
+
+        if [ $NARGS -gt 2 ]; then
+            print_error_message "$1 only requires only one option"
+        fi
+
+        case $2 in
+            "-n")
+                STYPE=1
+                ;;
+            "-i")
+                STYPE=2
+                ;;
+            "-c")
+                STYPE=3
+                ;;
+            "-h")
+                print_usage_message
+                ;;
+            *)
+                print_error_message "incorrect option"
+                ;;
+        esac
+
+    fi
+
+else
+
+    if [ $NARGS == 1 ]; then
+        print_error_message "$1 requires option"
+    fi
+
+    case $2 in
+        "-a")
+
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=1
+                STATEMENT=$3
+
+                STATEMENT_SET=1
+            fi
+            ;;
+
+        "-s")
+
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires two options"
+            else
+                ETYPE=2
+                STATUS_SYMB=$3
+                TAG=$4
+
+                TAG_SET=1
+                STATUS_SET=1
+
+                case $STATUS_SYMB in
+                    "-n")
+                        STATUS="(NN)"
+                        ;;
+                    "-i")
+                        STATUS="(II)"
+                        ;;
+                    "-c")
+                        STATUS="(CC)"
+                        ;;
+                    *)
+                        print_error_message "status not specified correctly"
+                        ;;
+                esac
+
+
+            fi
+            ;;
+
+        "-d")
+
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=3
+                TAG=$3
+
+                TAG_SET=1
+
+            fi
+            ;;
+
+        "-r")
+
+            if [ $NARGS -ne 2 ]; then
+                print_error_message "$1 $2 takes no argument"
+            else
+                ETYPE=4
+            fi
+            ;;
+        "-h")
+            print_usage_message
+            ;;
+
+        *)
+            print_error_message "not a valid edit option"
+            ;;
+
+    esac
+
+fi
+
+
+
+# # Read command line arguments
+# while getopts ":senica:m:d:" opt; do
+#     case $opt in
+#         h)
+#             print_usage_message
+#             ;;
+#         s)
+#             ACTION=1
+#             ;;
+#         e)
+#             ACTION=2
+#             ;;
+#         n)
+#             STYPE=1
+#             ;;
+#         i)
+#             STYPE=2
+#             ;;
+#         c)
+#             STYPE=3
+#             ;;
+#         a)
+#             ETYPE=1
+#             STATEMENT=$OPTARG
+#             ;;
+#         m)
+#             ETYPE=2
+#             TAG=$OPTARG
+#             TYPE="(II)"
+#             ;;
+#         d)
+#             ETYPE=3
+#             TAG=$OPTARG
+#             ;;
+#         ?)
+#             echo "  invalid option"
+#             exit -1
+#             ;;
+#         :)
+#             echo "  option requires argument"
+#             exit -1
+#             ;;
+#     esac
+# done
+
+# Now check arguments
+if [ $ACTION -eq 0 ]; then
+    print_error_message "no action specified"
+elif [ $ACTION -eq 1 ]; then
+    [ $ETYPE -ne 0 ] && print_error_message "do not specify edit option with option show"
+elif [ $ACTION -eq 2 ]; then
+    [ $STYPE -ne 0 ] && print_error_message "do not specify show option with option edit"
+else
+    print_error_message "incorrect action specified"
+fi
+
+
+if [ $ACTION -eq 1 ]; then
+
+    print_entries $STYPE
+
+else
+
+    case $ETYPE in
+
+        0) #
+            print_error_message "no edit option specified"
+            ;;
+        1)
+            TAG=$(print_last_entry_tag)
+            TAG=$((TAG+1))
+            print_entry "$TAG:(NN): $STATEMENT" >> $TODOFILE
+            ;;
+        2)
+            # Need to modify entry
+            modify_entry_status $TAG $STATUS
+            ;;
+        3)
+            delete_entry $TAG
+            ;;
+        4)
+            reorder_entry_tags
+            ;;
+    esac
+
+
+fi
+
+
+exit 0
