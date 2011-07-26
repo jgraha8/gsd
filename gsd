@@ -24,7 +24,7 @@
 ############################################################################
 
 SCRIPTNAME=`basename "$0"`
-TODOFILE="/home/jgraham/jhu/research/TODO"
+TODOFILE="$HOME/.todo"
 
 function print_usage_message {
     echo "Usage: $SCRIPTNAME command [command-options-and-arguments]"
@@ -360,6 +360,8 @@ function reorder_entry_tags {
 
 }
 
+# First check that the TODO file exists
+[ ! -f $TODOFILE ] && print_error_message "$TODOFILE not found"
 
 declare -i STYPE=0
 declare -i ETYPE=0
