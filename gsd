@@ -40,7 +40,7 @@ function print_usage_message {
     echo "  edit                      Edit TODO entries"
     echo "    Options:"
     echo "      -a <statement>        Add entry"
-    echo "      -s {-n|-i|-c} <tag>   Change statuse of entry"
+    echo "      -s {-n|-i|-c} <tag>   Change status of entry"
     echo "      -d <tag>              Delete entry"
     echo "      -r                    Reorder entry tags"
     echo " "
