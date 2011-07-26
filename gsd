@@ -231,7 +231,8 @@ function modify_entry_status {
 
     [ $_modified -ne 1 ] && print_error_message "specified tag not found"
 
-    mv .todo.tmp $TODOFILE
+    cp .todo.tmp $TODOFILE
+    rm -f .todo.tmp
     return 0
 
 }
@@ -279,7 +280,8 @@ function modify_entry_statement {
 
     [ $_modified -ne 1 ] && print_error_message "specified tag not found"
 
-    mv .todo.tmp $TODOFILE
+    cp .todo.tmp $TODOFILE
+    rm -f .todo.tmp
     return 0
 
 }
@@ -320,7 +322,8 @@ function delete_entry {
 
     [ $_deleted -ne 1 ] && print_error_message "specified tag not found"
 
-    mv .todo.tmp $TODOFILE
+    cp .todo.tmp $TODOFILE
+    rm -f .todo.tmp
 
     return 0
 
@@ -359,7 +362,8 @@ function reorder_entry_tags {
 
     done < $TODOFILE
 
-    mv .todo.tmp $TODOFILE
+    cp .todo.tmp $TODOFILE
+    rm -f .todo.tmp
 
     return 0
 
@@ -420,7 +424,8 @@ function toggle_important_flag {
 
     [ $_toggled -ne 1 ] && print_error_message "specified tag not found"
 
-    mv .todo.tmp $TODOFILE
+    cp .todo.tmp $TODOFILE
+    rm -f .todo.tmp
 
     return 0
 
