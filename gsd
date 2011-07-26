@@ -41,7 +41,7 @@ function print_usage_message {
     echo "  edit                      Edit TODO entries"
     echo "    Options:"
     echo "      -a <statement>        Add entry"
-    echo "      -s {-n|-i|-c} <tag>   Change status of entry"
+    echo "      -s {N|I|C} <tag>      Change status of entry"
     echo "      -m <statement>        Change entry statement"
     echo "      -d <tag>              Delete entry"
     echo "      -r                    Reorder entry tags"
@@ -528,13 +528,13 @@ else
                 STATUS_SET=1
 
                 case $STATUS_SYMB in
-                    "-n")
+                    "n"|"N")
                         STATUS="(N)"
                         ;;
-                    "-i")
+                    "i"|"I")
                         STATUS="(I)"
                         ;;
-                    "-c")
+                    "c"|"C")
                         STATUS="(C)"
                         ;;
                     *)
@@ -633,7 +633,7 @@ else
         1)
             TAG=$(print_last_entry_tag)
             TAG=$((TAG+1))
-            print_entry "$TAG:(N): $STATEMENT" >> $TODOFILE
+            echo "$TAG:(N): $STATEMENT" >> $TODOFILE
             ;;
         2)
             # Need to modify entry
