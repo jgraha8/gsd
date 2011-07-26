@@ -160,7 +160,9 @@ function print_entries {
 function print_last_entry_tag {
 
     local _ltype
+    local _tag
 
+    _tag="0"
     while read line; do
 
         check_line_type "$line"
@@ -170,7 +172,7 @@ function print_last_entry_tag {
             0) # Blank line or comment
                 ;;
             [1-3])
-                TAG=$(print_entry_tag "$line")
+                _tag=$(print_entry_tag "$line")
                 ;;
             *)
                 print_error_message "error on read"
@@ -179,7 +181,7 @@ function print_last_entry_tag {
 
     done < $TODOFILE
 
-    echo $TAG
+    echo $_tag
 
 }
 
@@ -360,8 +362,11 @@ function reorder_entry_tags {
 
 }
 
-# First check that the TODO file exists
-[ ! -f $TODOFILE ] && print_error_message "$TODOFILE not found"
+# First check that the TODO file exists and is readable
+if [ ! -f $TODOFILE ]; then
+    touch $TODOFILE
+    [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
+fi
 
 declare -i STYPE=0
 declare -i ETYPE=0
