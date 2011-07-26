@@ -44,6 +44,7 @@ function print_usage_message {
     echo "      -m <statement>        Change entry statement"
     echo "      -d <tag>              Delete entry"
     echo "      -r                    Reorder entry tags"
+    echo "      -i                    Toggle important flag"
     echo " "
     exit 0
 }
@@ -112,13 +113,13 @@ function check_line_type {
     _status=$(print_entry_status "$_line")
 
     case $_status in
-        "(NN)")
+        "(N)")
             return 1
             ;;
-        "(II)")
+        "(I)")
             return 2
             ;;
-        "(CC)")
+        "(C)")
             return 3
             ;;
         *)
@@ -245,7 +246,7 @@ function modify_entry_statement {
 
     _modified=0
 
- 
+
     rm -f .todo.tmp
     touch .todo.tmp
 
@@ -362,6 +363,68 @@ function reorder_entry_tags {
 
 }
 
+function toggle_important_flag {
+
+    local _tag="$1"
+    local _ltype
+    local _testtag
+
+    local _status
+    local _statement
+
+    local _toggled=0
+
+    rm -f .todo.tmp
+    touch .todo.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        if [ $_ltype -eq 0 ]; then
+            echo "$line" >> .todo.tmp
+        else
+            # Check if this is our tag
+            _testtag=$(print_entry_tag "$line")
+
+            if [ "$_tag" == "$_testtag" ]; then
+                _status=$(print_entry_status "$line")
+                _statement=$(print_entry_statement "$line")
+
+                # First see if the statement is marked as important
+                if [[ "$_statement" == *'(*)'* ]]; then
+                    # Trim off important tag
+                    _statement=${_statement#*'(*)'*}
+                else
+                    # Add important tag
+                    _statement="(*) $_statement"
+                fi
+
+                echo "$_tag:$_status: $_statement" >> .todo.tmp
+                _toggled=1
+
+            else
+
+                echo "$line" >> .todo.tmp
+
+            fi
+
+        fi
+
+    done < $TODOFILE
+
+    [ $_toggled -ne 1 ] && print_error_message "specified tag not found"
+
+    mv .todo.tmp $TODOFILE
+
+    return 0
+
+}
+
+
 # First check that the TODO file exists and is readable
 if [ ! -f $TODOFILE ]; then
     touch $TODOFILE
@@ -459,13 +522,13 @@ else
 
                 case $STATUS_SYMB in
                     "-n")
-                        STATUS="(NN)"
+                        STATUS="(N)"
                         ;;
                     "-i")
-                        STATUS="(II)"
+                        STATUS="(I)"
                         ;;
                     "-c")
-                        STATUS="(CC)"
+                        STATUS="(C)"
                         ;;
                     *)
                         print_error_message "status not specified correctly"
@@ -475,7 +538,7 @@ else
 
             fi
             ;;
-            
+
 
         "-d")
 
@@ -500,7 +563,7 @@ else
             ;;
 
         "-m")
-            
+
             if [ $NARGS -ne 4 ]; then
                 print_error_message "$1 $2 requires two options"
             else
@@ -512,6 +575,16 @@ else
                 TAG_SET=1
                 STATEMENT_SET=1
 
+            fi
+            ;;
+        "-i")
+
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=6
+                TAG=$3
+                TAG_SET=1
             fi
             ;;
 
@@ -557,7 +630,7 @@ fi
 #         m)
 #             ETYPE=2
 #             TAG=$OPTARG
-#             TYPE="(II)"
+#             TYPE="(I)"
 #             ;;
 #         d)
 #             ETYPE=3
@@ -600,7 +673,7 @@ else
         1)
             TAG=$(print_last_entry_tag)
             TAG=$((TAG+1))
-            print_entry "$TAG:(NN): $STATEMENT" >> $TODOFILE
+            print_entry "$TAG:(N): $STATEMENT" >> $TODOFILE
             ;;
         2)
             # Need to modify entry
@@ -614,6 +687,9 @@ else
             ;;
         5)
             [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" "$TAG"
+            ;;
+        6)
+            [ $TAG_SET -eq 1 ] && toggle_important_flag "$TAG"
             ;;
     esac
 
