@@ -5,8 +5,8 @@ See the end of the file for license conditions.
                                SUMMARY
 =====================================================================
 
-TODO (todo) is a utility used to create and manage to-do lists. It
-provides basic functionality such as:
+TODO (todo) is a utility used to create, manage, and print to-do
+lists. It provides basic functionality such as:
 
 1) Adding, deleting, and modifying to-do items
 
@@ -15,12 +15,14 @@ provides basic functionality such as:
 
 3) Flagging items that are most important
 
-4) Viewing items for a given status to see all completed jobs, all new
-   jobs, etc.
+4) Viewing and printing items for a given status to see all completed
+   jobs, all new jobs, etc.
 
 Currently only a single to-do list is created. In the future any
 number of lists will be able to be created and used so that you can
 have lists for home, work, etc.
+
+
 
 =====================================================================
                            GETTING STARTED
@@ -29,29 +31,37 @@ have lists for home, work, etc.
 To get started place the file "todo" somewhere in your PATH. The
 easiest what to see what does what is to run:
 
-todo help
+    todo help
 
-from the command line. To add your first items run:
+from the command line. 
 
-todo edit -a "Learn how to use todo"
-todo edit -a "Wash the dishes"
-todo edit -a "Walk the dog"
+
+
+=====================================================================
+                               TUTORIAL
+=====================================================================
+
+To add your first items run:
+
+    todo edit -a "Learn how to use todo"
+    todo edit -a "Wash the dishes"
+    todo edit -a "Walk the dog"
 
 To show the new entries, run:
 
-todo show
+    todo show
 
 and you should see the items that where entered as:
 
-1:(N): Learn howto use todo
+    1:(N): Learn howto use todo
 
-2:(N): Wash the dishes
+    2:(N): Wash the dishes
 
-3:(N): Walk the dog
+    3:(N): Walk the dog
 
 Each entry is composed of three parts: 
 
-<tag>:<status>: <statement>
+    <tag>:<status>: <statement>
 
 The tag is used to reference items when editing or deleting them,
 status lets you know the progress, and statement is the text you would
@@ -60,44 +70,53 @@ jot down on your to-do list.
 Since you are on the way to learning todo, go ahead and change the
 status of the first item with:
 
-todo edit -s I 1
+    todo edit -s I 1
 
 Showing the entries again shows that the status was updated to "(I)"
 for "in progress/incomplete". To look at only the new items run:
 
-todo show -n
+    todo show -n
 
 and similarly the incomplete items:
 
-todo show -i
+    todo show -i
 
 In some instances it is useful to flag some items to be important so
 they recieve the immediate attention. An important flag "(*)" may be
 toggled by using
 
-todo edit -i <tag>
+    todo edit -f <tag>
 
 Doing this for item 2 in list we get:
 
-1:(I): Learn how to use todo
+    1:(I): Learn how to use todo
 
-2:(N): (*) Wash the dishes
+    2:(N): (*) Wash the dishes
 
-3:(N): Walk the dog
+    3:(N): Walk the dog
 
 from "todo show". To unmark the item, just toggle it off with the same
 command. If you have a lot of items, you can tag the most important
 ones then choose to view only these by:
 
-todo show | grep \*
+    todo show -f
+
+You can also choose to print a list using the systems default printer
+(this requires the PRINTER environment variable to be set). To print the entire list run:
+
+    todo print
+
+and this will print the contents you'd see from from "todo show". To print say only the flagged items run:
+
+    todo print -f
 
 Once you are done with an item either mark it as complete with:
 
-todo edit -s C <tag>
+    todo edit -s C <tag>
 
 or delete the item using:
 
-todo edit -d <tag>
+    todo edit -d <tag>
 
 After you delete items you'll notice that the tag numbers remained the
 same and may not be continuous. This was done to ensure that if todo
@@ -105,27 +124,28 @@ is ran several times successively the tag number will remain the same
 and the wrong tags won't be referenced. To see this, let's delete item
 2 from our list with:
 
-todo edit -d 2
+    todo edit -d 2
 
 to get:
 
-1:(I): Learn how to use todo
+    1:(I): Learn how to use todo
 
-3:(N): Walk the dog
+    3:(N): Walk the dog
 
 from "todo show". Notice the tag numbers are 1 and 3, not 1 and
 2. Although not necessary, the tags can be put in successive order
 with:
 
-todo edit -r
+    todo edit -r
 
 to get:
 
-1:(I): Learn how to use todo
+    1:(I): Learn how to use todo
 
-2:(N): Walk the dog
+    2:(N): Walk the dog
 
-from "todo show". That should be enough to get you started. 
+from "todo show". Well, that should hopefully be enough to get you
+started.
 
 Enjoy.
 
