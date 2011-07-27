@@ -5,21 +5,22 @@ See the end of the file for license conditions.
                                SUMMARY
 =====================================================================
 
-TODO is a utility used to
-create and manage to-do lists. It provides basic functionality such
-as:
+TODO (todo) is a utility used to create and manage to-do lists. It
+provides basic functionality such as:
 
 1) Adding, deleting, and modifying to-do items
 
-2) Updating an item's status (new, incomplete, complete) as you work on it
+2) Updating an item's status (new, incomplete, complete) as you work
+   on it
 
 3) Flagging items that are most important
 
-4) Viewing items for a given status to see all completed jobs, all new jobs, etc.
+4) Viewing items for a given status to see all completed jobs, all new
+   jobs, etc.
 
-Currently only a single to-do list is created. In the future any number
-of lists will be able to be created and used so that you can have lists for home,
-work, etc.
+Currently only a single to-do list is created. In the future any
+number of lists will be able to be created and used so that you can
+have lists for home, work, etc.
 
 =====================================================================
                            GETTING STARTED
@@ -61,8 +62,8 @@ status of the first item with:
 
 todo edit -s I 1
 
-Showing the entries again shows that the status was updated to "(I)" for
-"in progress/incomplete". To look at only the new items run:
+Showing the entries again shows that the status was updated to "(I)"
+for "in progress/incomplete". To look at only the new items run:
 
 todo show -n
 
@@ -71,13 +72,14 @@ and similarly the incomplete items:
 todo show -i
 
 In some instances it is useful to flag some items to be important so
-they recieve the immediate attention. An important flag "(*)" may be toggled by using
+they recieve the immediate attention. An important flag "(*)" may be
+toggled by using
 
 todo edit -i <tag>
 
 Doing this for item 2 in list we get:
 
-1:(I): Learn howto use todo
+1:(I): Learn how to use todo
 
 2:(N): (*) Wash the dishes
 
@@ -107,7 +109,7 @@ todo edit -d 2
 
 to get:
 
-1:(I): Learn howto use todo
+1:(I): Learn how to use todo
 
 3:(N): Walk the dog
 
@@ -119,7 +121,7 @@ todo edit -r
 
 to get:
 
-1:(I): Learn howto use todo
+1:(I): Learn how to use todo
 
 2:(N): Walk the dog
 
