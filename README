@@ -1,7 +1,135 @@
 Copyright (C) 2011 Jason Graham <jgraha8@gmail.com> 
 See the end of the file for license conditions.
 
-NEED to update
+=====================================================================
+                               SUMMARY
+=====================================================================
+
+TODO is a utility used to
+create and manage to-do lists. It provides basic functionality such
+as:
+
+1) Adding, deleting, and modifying to-do items
+
+2) Updating an item's status (new, incomplete, complete) as you work on it
+
+3) Flagging items that are most important
+
+4) Viewing items for a given status to see all completed jobs, all new jobs, etc.
+
+Currently only a single to-do list is created. In the future any number
+of lists will be able to be created and used so that you can have lists for home,
+work, etc.
+
+=====================================================================
+                           GETTING STARTED
+=====================================================================
+
+To get started place the file "todo" somewhere in your PATH. The
+easiest what to see what does what is to run:
+
+todo help
+
+from the command line. To add your first items run:
+
+todo edit -a "Learn how to use todo"
+todo edit -a "Wash the dishes"
+todo edit -a "Walk the dog"
+
+To show the new entries, run:
+
+todo show
+
+and you should see the items that where entered as:
+
+1:(N): Learn howto use todo
+
+2:(N): Wash the dishes
+
+3:(N): Walk the dog
+
+Each entry is composed of three parts: 
+
+<tag>:<status>: <statement>
+
+The tag is used to reference items when editing or deleting them,
+status lets you know the progress, and statement is the text you would
+jot down on your to-do list.
+
+Since you are on the way to learning todo, go ahead and change the
+status of the first item with:
+
+todo edit -s I 1
+
+Showing the entries again shows that the status was updated to "(I)" for
+"in progress/incomplete". To look at only the new items run:
+
+todo show -n
+
+and similarly the incomplete items:
+
+todo show -i
+
+In some instances it is useful to flag some items to be important so
+they recieve the immediate attention. An important flag "(*)" may be toggled by using
+
+todo edit -i <tag>
+
+Doing this for item 2 in list we get:
+
+1:(I): Learn howto use todo
+
+2:(N): (*) Wash the dishes
+
+3:(N): Walk the dog
+
+from "todo show". To unmark the item, just toggle it off with the same
+command. If you have a lot of items, you can tag the most important
+ones then choose to view only these by:
+
+todo show | grep \*
+
+Once you are done with an item either mark it as complete with:
+
+todo edit -s C <tag>
+
+or delete the item using:
+
+todo edit -d <tag>
+
+After you delete items you'll notice that the tag numbers remained the
+same and may not be continuous. This was done to ensure that if todo
+is ran several times successively the tag number will remain the same
+and the wrong tags won't be referenced. To see this, let's delete item
+2 from our list with:
+
+todo edit -d 2
+
+to get:
+
+1:(I): Learn howto use todo
+
+3:(N): Walk the dog
+
+from "todo show". Notice the tag numbers are 1 and 3, not 1 and
+2. Although not necessary, the tags can be put in successive order
+with:
+
+todo edit -r
+
+to get:
+
+1:(I): Learn howto use todo
+
+2:(N): Walk the dog
+
+from "todo show".
+
+Enjoy.
+
+Please note I had already named this program "todo" before I saw the
+cutesy smartphone app. So no I did not rip off their name - I just
+removed the "-" from "to-do" :-)
 
 
 This file is part of todo
