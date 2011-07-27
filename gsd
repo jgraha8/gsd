@@ -347,6 +347,7 @@ function modify_entry_statement {
     local _testtag
     local _status
 
+    local _flagged
     local _modified
 
     _modified=0
@@ -370,8 +371,17 @@ function modify_entry_statement {
 
             if [[ "$_tag" == "$_testtag" ]]; then
                 _status=$(print_entry_status "$line")
+                _statement_orig=$(print_entry_statement "$line")
+
+                check_important_flag "$(print_entry_statement "$line")"
+                
+                if [ $? -eq 1 ]; then
+                    echo "$_tag:$_status: (*) $_statement" >> .todo.tmp
+                else
+                    echo "$_tag:$_status: $_statement" >> .todo.tmp
+                fi
+
                 _modified=1
-                echo "$_tag:$_status: $_statement" >> .todo.tmp
             else
                 echo "$line" >> .todo.tmp
             fi
@@ -509,7 +519,7 @@ function toggle_important_flag {
 
                 # First see if the statement is marked as important
                 check_important_flag "$_statement"
- 
+
                 if [ $? -eq 1 ]; then
                     _statement=${_statement#*'(*)'*}
                 else
