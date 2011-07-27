@@ -43,7 +43,7 @@ function print_usage_message {
     echo "      -m <statement>        Change entry statement"
     echo "      -d <tag>              Delete entry"
     echo "      -r                    Reorder entry tags"
-    echo "      -i <tag>              Toggle important flag"
+    echo "      -f <tag>              Toggle important flag"
     echo "      -h                    Print this message"
     echo " "
     exit 0
@@ -582,7 +582,7 @@ else
 
             fi
             ;;
-        "-i")
+        "-f")
 
             if [ $NARGS -ne 3 ]; then
                 print_error_message "$1 $2 requires one option"
