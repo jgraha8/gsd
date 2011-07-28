@@ -25,18 +25,27 @@
 
 SCRIPTNAME=`basename "$0"`
 TODOFILE="$HOME/.todo"
+TODOVERSION="cvs"
+
+#####################################################################
+# STDOUT PRINT FUNCTIONS
+#####################################################################
+
+#---------------------------------------------------------------------
+# PRINT_USAGE_MESSAGE
+#---------------------------------------------------------------------
 
 function print_usage_message {
     echo "Usage: $SCRIPTNAME command [command-options-and-arguments]"
     echo "Commands:"
     echo "  help                      Print this message"
-    echo "  show                      Show TODO entries"
+    echo "  show, -s                  Show TODO entries"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
     echo "      -i                    Show only entries with status incomplete"
     echo "      -c                    Show only entries with status complete"
     echo "      -h                    Print this message"
-    echo "  edit                      Edit TODO entries"
+    echo "  edit, -e                  Edit TODO entries"
     echo "    Options:"
     echo "      -a <statement>        Add entry"
     echo "      -s {N|I|C} <tag>      Change status of entry"
@@ -45,23 +54,39 @@ function print_usage_message {
     echo "      -r                    Reorder entry tags"
     echo "      -f <tag>              Toggle important flag"
     echo "      -h                    Print this message"
-    echo "  print                     Send TODO entries to printer"
+    echo "  print, -p                 Send TODO entries to printer"
     echo "    Options:"
     echo "      -n                    Print only entries with status new"
     echo "      -i                    Print only entries with status incomplete"
     echo "      -c                    Print only entries with status complete"
     echo "      -h                    Print this message"
-
-    echo " "
+    echo "  version, -v               Show TODO version"
     exit 0
 }
+
+#---------------------------------------------------------------------
+# PRINT_VERSION
+#---------------------------------------------------------------------
+
+function print_version {
+    echo "$SCRIPTNAME: version $TODOVERSION"
+    exit 0
+}
+
+#---------------------------------------------------------------------
+# PRINT_ERROR_MESSAGE
+#---------------------------------------------------------------------
 
 function print_error_message {
     echo "$SCRIPTNAME: $1"
     exit -1
 }
 
-function print_entry {
+#---------------------------------------------------------------------
+# PRINT_ENTRY_DIVIDER
+#---------------------------------------------------------------------
+
+function print_entry_divider {
     # echo "======================================================================"
     # echo "//////////////////////////////////////////////////////////////////////"
     echo "----------------------------------------------------------------------"
@@ -70,11 +95,29 @@ function print_entry {
     # echo "**********************************************************************"
     # echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
     # echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"
+    # echo " "
+}
+
+#---------------------------------------------------------------------
+# PRINT_ENTRY
+#---------------------------------------------------------------------
+
+function print_entry {
+
+    print_entry_divider
+    # Indent one space
     echo -n " "
     echo $1
     return 0
 }
 
+######################################################################
+# LINE EXTRACTION FUNCTIONS
+######################################################################
+
+#-------------------------------------------------------------------
+# PRINT_ENTRY_TAG
+#--------------------------------------------------------------------
 
 function print_entry_tag {
     local _line="$1"
@@ -84,6 +127,10 @@ function print_entry_tag {
     echo $_tag
 }
 
+#-------------------------------------------------------------------
+# PRINT_ENTRY_STATUS
+#--------------------------------------------------------------------
+
 function print_entry_status {
     local _line="$1"
     local _status
@@ -91,6 +138,10 @@ function print_entry_status {
     _status="`echo $_line | cut -d ':' -f 2`"
     echo $_status
 }
+
+#-------------------------------------------------------------------
+# PRINT_ENTRY_STATEMENT
+#--------------------------------------------------------------------
 
 function print_entry_statement {
 
@@ -111,6 +162,14 @@ function print_entry_statement {
 
 }
 
+######################################################################
+# LINE CHECKING FUNCTIONS
+######################################################################
+
+#-------------------------------------------------------------------
+# CHECK_IMPORTANT_FLAG
+#--------------------------------------------------------------------
+
 function check_important_flag {
     # For safety only valid statements should call this
     local _line="$1"
@@ -126,6 +185,10 @@ function check_important_flag {
     fi
 }
 
+
+#-------------------------------------------------------------------
+# CHECK_LINE_TYPE
+#--------------------------------------------------------------------
 
 function check_line_type {
 
@@ -183,139 +246,9 @@ function check_line_type {
 
 }
 
-function print_entries {
-
-    local _stype=$1
-    local _ltype
-
-    while read line; do
-
-        check_line_type "$line"
-        _ltype=$?
-
-        # Ignore blank or commented lines
-        if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
-
-            # case $_ltype in
-            #     1|19)
-            #         line="==> $line"
-            #         ;;
-            #     2|29)
-            #         line="====> $line"
-            #         ;;
-            #     3|39)
-            #         line="======> $line"
-            #         ;;
-            # esac
-
-            case $_stype in
-                0)
-                    # Print all valid entries
-                    print_entry "$line"
-                    ;;
-                1)
-                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$line"
-                    ;;
-                2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$line"
-                    ;;
-                3)
-                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$line"
-                    ;;
-                9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$line"
-                    ;;
-            esac
-
-        fi
-
-    done < $TODOFILE
-
-}
-
-function print_entries_to_printer {
-
-    local _stype=$1
-    local _ltype
-
-    local _print_status=-1
-
-    _modified=0
-
-    rm -f .todo.tmp
-    touch .todo.tmp
-
-    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
-
-
-    while read line; do
-
-        check_line_type "$line"
-        _ltype=$?
-
-        # Ignore blank or commented lines
-        if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
-
-            case $_stype in
-                0)
-                    # Print all valid entries
-                    print_entry "$line" >> .todo.tmp
-                    ;;
-                1)
-                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$line" >> .todo.tmp
-                    ;;
-                2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$line" >> .todo.tmp
-                    ;;
-                3)
-                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
-                    ;;
-                9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
-                    ;;
-            esac
-
-        fi
-
-    done < $TODOFILE
-
-    # Send to printer; requires $PRINTER to be set
-    cat .todo.tmp | lpr -p
-
-    _print_status=$?
-    [ $_print_status -ne 0 ] && print_error_message "unable to print"
-
-    rm .todo.tmp
-
-}
-
-function print_last_entry_tag {
-
-    local _ltype
-    local _tag
-
-    _tag=0
-    while read line; do
-
-        check_line_type "$line"
-        _ltype=$?
-
-        case $_ltype in
-            0|11) # Blank line or comment
-                ;;
-            [1-3]|19|29|39)
-                _tag=$(print_entry_tag "$line")
-                ;;
-            *)
-                print_error_message "error on read"
-                ;;
-        esac
-
-    done < $TODOFILE
-
-    echo $_tag
-
-}
+#-------------------------------------------------------------------
+# GET_ENTRY_LINE_NUMBER
+#--------------------------------------------------------------------
 
 function get_entry_line_number {
 
@@ -347,6 +280,124 @@ function get_entry_line_number {
 
 }
 
+#-------------------------------------------------------------------
+# PRINT_LAST_ENTRY_TAG
+#-------------------------------------------------------------------
+
+function print_last_entry_tag {
+
+    local _ltype
+    local _tag
+
+    _tag=0
+    while read line; do
+
+        check_line_type "$line"
+        _ltype=$?
+
+        case $_ltype in
+            0|11) # Blank line or comment
+                ;;
+            [1-3]|19|29|39)
+                _tag=$(print_entry_tag "$line")
+                ;;
+            *)
+                print_error_message "error on read"
+                ;;
+        esac
+
+    done < $TODOFILE
+
+    echo $_tag
+
+}
+
+######################################################################
+# ACTION FUNCTIONS
+######################################################################
+
+#-------------------------------------------------------------------
+# PRINT_ENTRIES
+#--------------------------------------------------------------------
+
+function print_entries {
+
+    local _stype=$1
+    local _printloc="$2"
+    local _ltype
+    local _line
+
+    declare -i _printed_one
+    local _printed_one=0
+
+    while read _line; do
+
+        check_line_type "$_line"
+        _ltype=$?
+
+        # Ignore blank or commented lines
+        if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
+
+            _printed_one=1
+
+            case $_stype in
+                0)
+                    # Print all valid entries
+                    print_entry "$_line" >> "$_printloc"
+                    ;;
+                1)
+                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$_line" >> "$_printloc"
+                    ;;
+                2)
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$_line" >> "$_printloc"
+                    ;;
+                3)
+                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$_line" >> "$_printloc"
+                    ;;
+                9)
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$_line" >> "$_printloc"
+                    ;;
+            esac
+
+        fi
+
+    done < $TODOFILE
+
+    # Print a blank entry
+    [ $_printed_one -eq 1 ] && print_entry_divider >> "$_printloc"
+
+}
+
+#-------------------------------------------------------------------
+# PRINT_ENTRIES_TO_PRINTER
+#--------------------------------------------------------------------
+
+function print_entries_to_printer {
+
+    local _stype=$1
+    local _ltype
+
+    rm -f $TODOFILE.tmp
+    touch $TODOFILE.tmp
+
+    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+
+    # Print contents to temporary file
+    print_entries $_stype "$TODOFILE.tmp"
+
+    # Send to printer; requires $PRINTER to be set
+    cat $TODOFILE.tmp | lpr -p
+
+    [ $? -ne 0 ] && print_error_message "unable to print"
+
+    rm -f $TODOFILE.tmp
+
+}
+
+#-------------------------------------------------------------------
+# MODIFY_ENTRY_STATUS
+#--------------------------------------------------------------------
+
 function modify_entry_status {
 
     local _status="$1"
@@ -365,54 +416,22 @@ function modify_entry_status {
     _statement=$(print_entry_statement "$_line")
 
     # Update the entry in the todo file
-    sed -i.bak "$_linenumber c$_tag:$_status: $_statement" $TODOFILE
+    sed -i.tmp "$_linenumber c$_tag:$_status: $_statement" $TODOFILE
 
     if [ $? -ne 0 ]; then
-        cp $TODOFILE.bak $TODOFILE
+        cp $TODOFILE.tmp $TODOFILE
         print_error_message "could not update entry status"
     else
-        rm $TODOFILE.bak
+        rm -f $TODOFILE.tmp
     fi
 
-    # Read the line
-
-
-    # rm -f .todo.tmp
-    # touch .todo.tmp
-
-    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
-
-    # while read line; do
-
-    #     check_line_type "$line"
-    #     _ltype=$?
-
-    #     if [ $_ltype -eq 11 ]; then
-    #         # write comment
-    #         echo "$line" >> .todo.tmp
-    #     elif [ $_ltype -ne 0 ]; then
-    #         # Check if this is our tag
-    #         _testtag=$(print_entry_tag "$line")
-
-    #         if [[ "$_tag" == "$_testtag" ]]; then
-    #             _statement=$(print_entry_statement "$line")
-    #             _modified=1
-    #             echo "$_tag:$_status: $_statement" >> .todo.tmp
-    #         else
-    #             echo "$line" >> .todo.tmp
-    #         fi
-
-    #     fi
-
-    # done < $TODOFILE
-
-    # [ $_modified -ne 1 ] && print_error_message "specified tag not found"
-
-    # cp .todo.tmp $TODOFILE
-    # rm -f .todo.tmp
     return 0
 
 }
+
+#-------------------------------------------------------------------
+# MODIFY_ENTRY_STATMENT
+#--------------------------------------------------------------------
 
 function modify_entry_statement {
 
@@ -440,59 +459,22 @@ function modify_entry_statement {
     fi
 
     # Update the entry in the todo file
-    sed -i.bak "$_linenumber c$_line" $TODOFILE
+    sed -i.tmp "$_linenumber c$_line" $TODOFILE
 
     if [ $? -ne 0 ]; then
-        cp $TODOFILE.bak $TODOFILE
+        cp $TODOFILE.tmp $TODOFILE
         print_error_message "could not modify entry statement"
     else
-        rm $TODOFILE.bak
+        rm -f $TODOFILE.tmp
     fi
 
-    # rm -f .todo.tmp
-    # touch .todo.tmp
-
-    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
-
-    # while read line; do
-
-    #     check_line_type "$line"
-    #     _ltype=$?
-
-    #     if [ $_ltype -eq 11 ]; then
-    #         echo "$line" >> .todo.tmp
-    #     elif [ $_ltype -ne 0 ]; then
-    #         # Check if this is our tag
-    #         _testtag=$(print_entry_tag "$line")
-
-    #         if [[ "$_tag" == "$_testtag" ]]; then
-    #             _status=$(print_entry_status "$line")
-    #             _statement_orig=$(print_entry_statement "$line")
-
-    #             check_important_flag "$(print_entry_statement "$line")"
-
-    #             if [ $? -eq 1 ]; then
-    #                 echo "$_tag:$_status: (*) $_statement" >> .todo.tmp
-    #             else
-    #                 echo "$_tag:$_status: $_statement" >> .todo.tmp
-    #             fi
-
-    #             _modified=1
-    #         else
-    #             echo "$line" >> .todo.tmp
-    #         fi
-
-    #     fi
-
-    # done < $TODOFILE
-
-    # [ $_modified -ne 1 ] && print_error_message "specified tag not found"
-
-    # cp .todo.tmp $TODOFILE
-    # rm -f .todo.tmp
     return 0
 
 }
+
+#-------------------------------------------------------------------
+# DELETE_ENTRY
+#--------------------------------------------------------------------
 
 function delete_entry {
 
@@ -508,52 +490,22 @@ function delete_entry {
     _linenumber=$?
 
     # Delete the entry in the todo file
-    sed -i.bak "$_linenumber d" $TODOFILE
+    sed -i.tmp "$_linenumber d" $TODOFILE
 
     if [ $? -ne 0 ]; then
-        cp $TODOFILE.bak $TODOFILE
+        cp $TODOFILE.tmp $TODOFILE
         print_error_message "could not delete entry"
     else
-        rm $TODOFILE.bak
+        rm -f $TODOFILE.tmp
     fi
-
-
-    # local _deleted=0
-
-    # rm -f .todo.tmp
-    # touch .todo.tmp
-
-    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
-
-    # while read line; do
-
-    #     check_line_type "$line"
-    #     _ltype=$?
-
-    #     if [ $_ltype -eq 11 ]; then
-    #         echo "$line" >> .todo.tmp
-    #     elif [ $_ltype -ne 0 ]; then
-    #         # Check if this is our tag
-    #         _testtag=$(print_entry_tag "$line")
-
-    #         if [[ "$_tag" == "$_testtag" ]]; then
-    #             _deleted=1
-    #         else
-    #             echo "$line" >> .todo.tmp
-    #         fi
-
-    #     fi
-
-    # done < $TODOFILE
-
-    # [ $_deleted -ne 1 ] && print_error_message "specified tag not found"
-
-    # cp .todo.tmp $TODOFILE
-    # rm -f .todo.tmp
 
     return 0
 
 }
+
+#-------------------------------------------------------------------
+# REORDER_ENTRY_TAGS
+#--------------------------------------------------------------------
 
 function reorder_entry_tags {
 
@@ -599,6 +551,10 @@ function reorder_entry_tags {
 
 }
 
+#-------------------------------------------------------------------
+# TOGGLE_IMPORTANT_FLAG
+#--------------------------------------------------------------------
+
 function toggle_important_flag {
 
     local _tag="$1"
@@ -633,71 +589,22 @@ function toggle_important_flag {
     _line="$_tag:$_status: $_statement"
 
     # Update the entry in the todo file
-    sed -i.bak "$_linenumber c$_line" $TODOFILE
+    sed -i.tmp "$_linenumber c$_line" $TODOFILE
 
     if [ $? -ne 0 ]; then
-        cp $TODOFILE.bak $TODOFILE
+        cp $TODOFILE.tmp $TODOFILE
         print_error_message "could not toggle flag"
     else
-        rm $TODOFILE.bak
+        rm -f $TODOFILE.tmp
     fi
-
-    # rm -f .todo.tmp
-    # touch .todo.tmp
-
-    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
-
-    # while read line; do
-
-    #     check_line_type "$line"
-    #     _ltype=$?
-
-    #     if [ $_ltype -eq 11 ]; then
-
-    #         echo "$line" >> .todo.tmp
-
-    #     elif [ $_ltype -ne 0 ]; then
-
-    #         # Check if this is our tag
-    #         _testtag=$(print_entry_tag "$line")
-
-    #         if [[ "$_tag" == "$_testtag" ]]; then
-
-    #             _status=$(print_entry_status "$line")
-    #             _statement=$(print_entry_statement "$line")
-
-    #             # First see if the statement is marked as important
-    #             check_important_flag "$_statement"
-
-    #             if [ $? -eq 1 ]; then
-    #                 _statement=${_statement#*'(*)'*}
-    #             else
-    #                 # Add important tag
-    #                 _statement="(*) $_statement"
-    #             fi
-
-    #             echo "$_tag:$_status: $_statement" >> .todo.tmp
-    #             _toggled=1
-
-    #         else
-
-    #             echo "$line" >> .todo.tmp
-
-    #         fi
-
-    #     fi
-
-    # done < $TODOFILE
-
-    # [ $_toggled -ne 1 ] && print_error_message "specified tag not found"
-
-    # cp .todo.tmp $TODOFILE
-    # rm -f .todo.tmp
 
     return 0
 
 }
 
+#####################################################################
+# MAIN
+#####################################################################
 
 # First check that the TODO file exists and is readable
 if [ ! -f $TODOFILE ]; then
@@ -720,17 +627,20 @@ fi
 
     # First argument should be the action
 case $1 in
-    "show")
+    "show"|"-s")
             ACTION=1
             ;;
-    "edit")
+    "edit"|"-e")
             ACTION=2
             ;;
-    "print")
+    "print"|"-p")
             ACTION=3
             ;;
-    "-h" | "help")
+    "help"|"-h")
             print_usage_message
+            ;;
+    "version"|"-v")
+            print_version
             ;;
     *)
             print_error_message "action not specified correctly"
@@ -859,22 +769,22 @@ else
             ;;
         "-f")
 
-        if [ $NARGS -ne 3 ]; then
-            print_error_message "$1 $2 requires one option"
-        else
-            ETYPE=6
-            TAG=$3
-            TAG_SET=1
-        fi
-        ;;
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=6
+                TAG=$3
+                TAG_SET=1
+            fi
+            ;;
 
         "-h")
-        print_usage_message
-        ;;
+            print_usage_message
+            ;;
 
         *)
-        print_error_message "not a valid edit option"
-        ;;
+            print_error_message "not a valid edit option"
+            ;;
 
     esac
 
@@ -894,7 +804,7 @@ fi
 
 if [ $ACTION -eq 1 ]; then
 
-    print_entries $STYPE
+    print_entries $STYPE /dev/stdout
 
 elif [ $ACTION -eq 3 ]; then
 
@@ -905,29 +815,29 @@ else
     case $ETYPE in
 
         0) #
-        print_error_message "no edit option specified"
-        ;;
+            print_error_message "no edit option specified"
+            ;;
         1)
-        TAG=$(print_last_entry_tag)
-        TAG=$((TAG+1))
-        echo "$TAG:(N): $STATEMENT" >> $TODOFILE
-        ;;
+            TAG=$(print_last_entry_tag)
+            TAG=$((TAG+1))
+            echo "$TAG:(N): $STATEMENT" >> $TODOFILE
+            ;;
         2)
             # Need to modify entry
-        [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status "$STATUS" "$TAG"
-        ;;
+            [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status "$STATUS" "$TAG"
+            ;;
         3)
-        [ $TAG_SET -eq 1 ] && delete_entry "$TAG"
-        ;;
+            [ $TAG_SET -eq 1 ] && delete_entry "$TAG"
+            ;;
         4)
-        reorder_entry_tags
-        ;;
+            reorder_entry_tags
+            ;;
         5)
-        [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" "$TAG"
-        ;;
+            [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" "$TAG"
+            ;;
         6)
-        [ $TAG_SET -eq 1 ] && toggle_important_flag "$TAG"
-        ;;
+            [ $TAG_SET -eq 1 ] && toggle_important_flag "$TAG"
+            ;;
     esac
 
 
