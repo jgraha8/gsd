@@ -97,9 +97,16 @@ function print_entry_statement {
 
     # This function assumes that a valid line is provided
     local  _line="$1"
+    local _tag
+    local _status
     local _statement
 
-    _statement="`echo $_line | cut -d ':' -f 3`"
+    _tag=$(print_entry_tag "$_line")
+    _status=$(print_entry_status "$_line")
+
+    # Trim front material; avoiding the usage of soley : as a
+    # delimiter so it can exist in text
+    _statement=${_line#"$_tag:$_status: "}
     echo $_statement
 
 }
@@ -252,33 +259,33 @@ function print_entries_to_printer {
             case $_stype in
                 0)
                     # Print all valid entries
-print_entry "$line" >> .todo.tmp
-;;
-1)
-[ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$line" >> .todo.tmp
-;;
-2)
-[ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$line" >> .todo.tmp
-;;
-3)
-[ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
-;;
-9)
-[ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
-;;
-esac
+                    print_entry "$line" >> .todo.tmp
+                    ;;
+                1)
+                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$line" >> .todo.tmp
+                    ;;
+                2)
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$line" >> .todo.tmp
+                    ;;
+                3)
+                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
+                    ;;
+                9)
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$line" >> .todo.tmp
+                    ;;
+            esac
 
-fi
+        fi
 
-done < $TODOFILE
+    done < $TODOFILE
 
     # Send to printer; requires $PRINTER to be set
-cat .todo.tmp | lpr -p
+    cat .todo.tmp | lpr -p
 
-_print_status=$?
-[ $_print_status -ne 0 ] && print_error_message "unable to print"
+    _print_status=$?
+    [ $_print_status -ne 0 ] && print_error_message "unable to print"
 
-rm .todo.tmp
+    rm .todo.tmp
 
 }
 
@@ -295,18 +302,48 @@ function print_last_entry_tag {
 
         case $_ltype in
             0|11) # Blank line or comment
-;;
-[1-3]|19|29|39)
-_tag=$(print_entry_tag "$line")
-;;
-*)
-print_error_message "error on read"
-;;
-esac
+                ;;
+            [1-3]|19|29|39)
+                _tag=$(print_entry_tag "$line")
+                ;;
+            *)
+                print_error_message "error on read"
+                ;;
+        esac
 
-done < $TODOFILE
+    done < $TODOFILE
 
-echo $_tag
+    echo $_tag
+
+}
+
+function get_entry_line_number {
+
+    # This function will exit on error
+
+    local _tag="$1"
+    local _n
+    local _line
+    local _ltype
+
+    for _n in `grep -w -n "$_tag:" $TODOFILE | cut -f1 -d:`
+    do
+
+        _line=$(sed -n ${_n}p $TODOFILE)
+
+        check_line_type "$_line"
+        _ltype=$?
+
+        # Make sure its a valid entry
+        if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
+            _tagtest=$(print_entry_tag "$_line")
+            [[ "$_tag" == "$_tagtest" ]] && return $_n
+        fi
+
+    done
+
+    # Should have returned by now
+    print_error_message "specified tag not found"
 
 }
 
@@ -314,47 +351,65 @@ function modify_entry_status {
 
     local _status="$1"
     local _tag="$2"
-    local _ltype
-    local _testtag
+
     local _statement
+    local _linenumber
 
-    local _modified
+    #get_entry_line_number "$_tag"
+    get_entry_line_number "$_tag"
+    _linenumber=$?
 
-    _modified=0
+    _line=$(sed -n ${_linenumber}p $TODOFILE)
 
-    rm -f .todo.tmp
-    touch .todo.tmp
+    # Extract the statement
+    _statement=$(print_entry_statement "$_line")
 
-    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+    # Update the entry in the todo file
+    sed -i.bak "$_linenumber c$_tag:$_status: $_statement" $TODOFILE
 
-    while read line; do
+    if [ $? -ne 0 ]; then
+        cp $TODOFILE.bak $TODOFILE
+        print_error_message "could not update entry status"
+    else
+        rm $TODOFILE.bak
+    fi
 
-        check_line_type "$line"
-        _ltype=$?
+    # Read the line
 
-        if [ $_ltype -eq 11 ]; then
-            # write comment
-            echo "$line" >> .todo.tmp
-        elif [ $_ltype -ne 0 ]; then
-            # Check if this is our tag
-            _testtag=$(print_entry_tag "$line")
 
-            if [[ "$_tag" == "$_testtag" ]]; then
-                _statement=$(print_entry_statement "$line")
-                _modified=1
-                echo "$_tag:$_status: $_statement" >> .todo.tmp
-            else
-                echo "$line" >> .todo.tmp
-            fi
+    # rm -f .todo.tmp
+    # touch .todo.tmp
 
-        fi
+    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
-    done < $TODOFILE
+    # while read line; do
 
-    [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+    #     check_line_type "$line"
+    #     _ltype=$?
 
-    cp .todo.tmp $TODOFILE
-    rm -f .todo.tmp
+    #     if [ $_ltype -eq 11 ]; then
+    #         # write comment
+    #         echo "$line" >> .todo.tmp
+    #     elif [ $_ltype -ne 0 ]; then
+    #         # Check if this is our tag
+    #         _testtag=$(print_entry_tag "$line")
+
+    #         if [[ "$_tag" == "$_testtag" ]]; then
+    #             _statement=$(print_entry_statement "$line")
+    #             _modified=1
+    #             echo "$_tag:$_status: $_statement" >> .todo.tmp
+    #         else
+    #             echo "$line" >> .todo.tmp
+    #         fi
+
+    #     fi
+
+    # done < $TODOFILE
+
+    # [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+
+    # cp .todo.tmp $TODOFILE
+    # rm -f .todo.tmp
     return 0
 
 }
@@ -363,57 +418,78 @@ function modify_entry_statement {
 
     local _statement="$1"
     local _tag="$2"
-    local _ltype
-    local _testtag
+
     local _status
+    local _linenumber
 
-    local _flagged
-    local _modified
+    #get_entry_line_number "$_tag"
+    get_entry_line_number "$_tag"
+    _linenumber=$?
 
-    _modified=0
+    _line=$(sed -n ${_linenumber}p $TODOFILE)
 
+    # Extract the status
+    _status=$(print_entry_status "$_line")
 
-    rm -f .todo.tmp
-    touch .todo.tmp
+    check_important_flag $(print_entry_statement "$_line")
 
-    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+    if [ $? -eq 1 ]; then
+        _line="$_tag:$_status: (*) $_statement"
+    else
+        _line="$_tag:$_status: $_statement"
+    fi
 
-    while read line; do
+    # Update the entry in the todo file
+    sed -i.bak "$_linenumber c$_line" $TODOFILE
 
-        check_line_type "$line"
-        _ltype=$?
+    if [ $? -ne 0 ]; then
+        cp $TODOFILE.bak $TODOFILE
+        print_error_message "could not modify entry statement"
+    else
+        rm $TODOFILE.bak
+    fi
 
-        if [ $_ltype -eq 11 ]; then
-            echo "$line" >> .todo.tmp
-        elif [ $_ltype -ne 0 ]; then
-            # Check if this is our tag
-            _testtag=$(print_entry_tag "$line")
+    # rm -f .todo.tmp
+    # touch .todo.tmp
 
-            if [[ "$_tag" == "$_testtag" ]]; then
-                _status=$(print_entry_status "$line")
-                _statement_orig=$(print_entry_statement "$line")
+    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
-                check_important_flag "$(print_entry_statement "$line")"
+    # while read line; do
 
-                if [ $? -eq 1 ]; then
-                    echo "$_tag:$_status: (*) $_statement" >> .todo.tmp
-                else
-                    echo "$_tag:$_status: $_statement" >> .todo.tmp
-                fi
+    #     check_line_type "$line"
+    #     _ltype=$?
 
-                _modified=1
-            else
-                echo "$line" >> .todo.tmp
-            fi
+    #     if [ $_ltype -eq 11 ]; then
+    #         echo "$line" >> .todo.tmp
+    #     elif [ $_ltype -ne 0 ]; then
+    #         # Check if this is our tag
+    #         _testtag=$(print_entry_tag "$line")
 
-        fi
+    #         if [[ "$_tag" == "$_testtag" ]]; then
+    #             _status=$(print_entry_status "$line")
+    #             _statement_orig=$(print_entry_statement "$line")
 
-    done < $TODOFILE
+    #             check_important_flag "$(print_entry_statement "$line")"
 
-    [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+    #             if [ $? -eq 1 ]; then
+    #                 echo "$_tag:$_status: (*) $_statement" >> .todo.tmp
+    #             else
+    #                 echo "$_tag:$_status: $_statement" >> .todo.tmp
+    #             fi
 
-    cp .todo.tmp $TODOFILE
-    rm -f .todo.tmp
+    #             _modified=1
+    #         else
+    #             echo "$line" >> .todo.tmp
+    #         fi
+
+    #     fi
+
+    # done < $TODOFILE
+
+    # [ $_modified -ne 1 ] && print_error_message "specified tag not found"
+
+    # cp .todo.tmp $TODOFILE
+    # rm -f .todo.tmp
     return 0
 
 }
@@ -424,38 +500,56 @@ function delete_entry {
     local _ltype
     local _testtag
 
-    local _deleted=0
+    local _status
+    local _linenumber
 
-    rm -f .todo.tmp
-    touch .todo.tmp
+    #get_entry_line_number "$_tag"
+    get_entry_line_number "$_tag"
+    _linenumber=$?
 
-    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+    # Delete the entry in the todo file
+    sed -i.bak "$_linenumber d" $TODOFILE
 
-    while read line; do
+    if [ $? -ne 0 ]; then
+        cp $TODOFILE.bak $TODOFILE
+        print_error_message "could not delete entry"
+    else
+        rm $TODOFILE.bak
+    fi
 
-        check_line_type "$line"
-        _ltype=$?
 
-        if [ $_ltype -eq 11 ]; then
-            echo "$line" >> .todo.tmp
-        elif [ $_ltype -ne 0 ]; then
-            # Check if this is our tag
-            _testtag=$(print_entry_tag "$line")
+    # local _deleted=0
 
-            if [[ "$_tag" == "$_testtag" ]]; then
-                _deleted=1
-            else
-                echo "$line" >> .todo.tmp
-            fi
+    # rm -f .todo.tmp
+    # touch .todo.tmp
 
-        fi
+    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
-    done < $TODOFILE
+    # while read line; do
 
-    [ $_deleted -ne 1 ] && print_error_message "specified tag not found"
+    #     check_line_type "$line"
+    #     _ltype=$?
 
-    cp .todo.tmp $TODOFILE
-    rm -f .todo.tmp
+    #     if [ $_ltype -eq 11 ]; then
+    #         echo "$line" >> .todo.tmp
+    #     elif [ $_ltype -ne 0 ]; then
+    #         # Check if this is our tag
+    #         _testtag=$(print_entry_tag "$line")
+
+    #         if [[ "$_tag" == "$_testtag" ]]; then
+    #             _deleted=1
+    #         else
+    #             echo "$line" >> .todo.tmp
+    #         fi
+
+    #     fi
+
+    # done < $TODOFILE
+
+    # [ $_deleted -ne 1 ] && print_error_message "specified tag not found"
+
+    # cp .todo.tmp $TODOFILE
+    # rm -f .todo.tmp
 
     return 0
 
@@ -463,14 +557,18 @@ function delete_entry {
 
 function reorder_entry_tags {
 
+    # This function reorders ("sequentializes") them and has the nice
+    # side-effect of removing blank lines
+
     local _status
     local _statement
     local _ltype
+    local line
 
     declare -i _tag
 
-    rm -f .todo.tmp
-    touch .todo.tmp
+    rm -f $TODOFILE.tmp
+    touch $TODOFILE.tmp
 
     [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
@@ -481,21 +579,21 @@ function reorder_entry_tags {
         _ltype=$?
 
         if [ $_ltype -eq 11 ]; then
-            echo "$line" >> .todo.tmp
+            echo "$line" >> $TODOFILE.tmp
         elif [ $_ltype -ne 0 ]; then
 
             # Check if this is our tag
             _tag=$((_tag+1))
             _status=$(print_entry_status "$line")
             _statement=$(print_entry_statement "$line")
-            echo "$_tag:$_status: $_statement" >> .todo.tmp
+            echo "$_tag:$_status: $_statement" >> $TODOFILE.tmp
 
         fi
 
     done < $TODOFILE
 
-    cp .todo.tmp $TODOFILE
-    rm -f .todo.tmp
+    cp $TODOFILE.tmp $TODOFILE
+    rm -f $TODOFILE.tmp
 
     return 0
 
@@ -504,108 +602,139 @@ function reorder_entry_tags {
 function toggle_important_flag {
 
     local _tag="$1"
-    local _ltype
-    local _testtag
 
     local _status
     local _statement
 
-#    local _flagged
-    local _toggled=0
+    local _line
+    local _linenumber
 
-    rm -f .todo.tmp
-    touch .todo.tmp
+    get_entry_line_number "$_tag"
+    _linenumber=$?
 
-    [ $? -ne 0 ] && print_error_message "cannot create temporary file"
+    _line=$(sed -n ${_linenumber}p $TODOFILE)
 
-    while read line; do
+    # Extract the status
+    _status=$(print_entry_status "$_line")
+    _statement=$(print_entry_statement "$_line")
 
-        check_line_type "$line"
-        _ltype=$?
+    # First see if the statement is marked as important
+    check_important_flag "$_statement"
 
-        if [ $_ltype -eq 11 ]; then
+    if [ $? -eq 1 ]; then
+        # Trim old flag
+        _statement=${_statement#'(*)'}
+    else
+        # Add important tag
+        _statement="(*) $_statement"
+    fi
 
-            echo "$line" >> .todo.tmp
+    # Reconstruct the line
+    _line="$_tag:$_status: $_statement"
 
-        elif [ $_ltype -ne 0 ]; then
+    # Update the entry in the todo file
+    sed -i.bak "$_linenumber c$_line" $TODOFILE
 
-            # Check if this is our tag
-            _testtag=$(print_entry_tag "$line")
+    if [ $? -ne 0 ]; then
+        cp $TODOFILE.bak $TODOFILE
+        print_error_message "could not toggle flag"
+    else
+        rm $TODOFILE.bak
+    fi
 
-            if [[ "$_tag" == "$_testtag" ]]; then
+    # rm -f .todo.tmp
+    # touch .todo.tmp
 
-                _status=$(print_entry_status "$line")
-                _statement=$(print_entry_statement "$line")
+    # [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
-                # First see if the statement is marked as important
-                check_important_flag "$_statement"
+    # while read line; do
 
-                if [ $? -eq 1 ]; then
-                    _statement=${_statement#*'(*)'*}
-                else
-                    # Add important tag
-                    _statement="(*) $_statement"
-                fi
+    #     check_line_type "$line"
+    #     _ltype=$?
 
-                echo "$_tag:$_status: $_statement" >> .todo.tmp
-                _toggled=1
+    #     if [ $_ltype -eq 11 ]; then
 
-            else
+    #         echo "$line" >> .todo.tmp
 
-                echo "$line" >> .todo.tmp
+    #     elif [ $_ltype -ne 0 ]; then
 
-            fi
+    #         # Check if this is our tag
+    #         _testtag=$(print_entry_tag "$line")
 
-        fi
+    #         if [[ "$_tag" == "$_testtag" ]]; then
 
-    done < $TODOFILE
+    #             _status=$(print_entry_status "$line")
+    #             _statement=$(print_entry_statement "$line")
 
-    [ $_toggled -ne 1 ] && print_error_message "specified tag not found"
+    #             # First see if the statement is marked as important
+    #             check_important_flag "$_statement"
 
-    cp .todo.tmp $TODOFILE
-    rm -f .todo.tmp
+    #             if [ $? -eq 1 ]; then
+    #                 _statement=${_statement#*'(*)'*}
+    #             else
+    #                 # Add important tag
+    #                 _statement="(*) $_statement"
+    #             fi
+
+    #             echo "$_tag:$_status: $_statement" >> .todo.tmp
+    #             _toggled=1
+
+    #         else
+
+    #             echo "$line" >> .todo.tmp
+
+    #         fi
+
+    #     fi
+
+    # done < $TODOFILE
+
+    # [ $_toggled -ne 1 ] && print_error_message "specified tag not found"
+
+    # cp .todo.tmp $TODOFILE
+    # rm -f .todo.tmp
 
     return 0
 
-                    }
+}
 
 
 # First check that the TODO file exists and is readable
-                    if [ ! -f $TODOFILE ]; then
-                        touch $TODOFILE
-                        [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
-                    fi
+if [ ! -f $TODOFILE ]; then
+    touch $TODOFILE
+    [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
+fi
 
-                    declare -i STYPE=0
-                    declare -i ETYPE=0
-                    declare -i ACTION=0
+declare -i STYPE=0
+declare -i ETYPE=0
+declare -i ACTION=0
 
-                    declare -i TAG_SET=0
-                    declare -i STATUS_SET=0
-                    declare -i STATEMENT_SET=0
+declare -i TAG_SET=0
+declare -i STATUS_SET=0
+declare -i STATEMENT_SET=0
 
-                    NARGS=$#
-                    if [ $NARGS -lt 1 ]; then
-                        print_error_message "action not specified"
-                    fi
+NARGS=$#
+if [ $NARGS -lt 1 ]; then
+    print_error_message "action not specified"
+fi
 
     # First argument should be the action
-                    case $1 in
-                        "show")
-ACTION=1
-;;
-"edit")
-ACTION=2
-;;
-"print")
-ACTION=3
-;;
-"-h" | "help")
-print_usage_message
-;;
-*)
-print_error_message "action not specified correctly"
-;;
+case $1 in
+    "show")
+            ACTION=1
+            ;;
+    "edit")
+            ACTION=2
+            ;;
+    "print")
+            ACTION=3
+            ;;
+    "-h" | "help")
+            print_usage_message
+            ;;
+    *)
+            print_error_message "action not specified correctly"
+            ;;
 esac
 
     # Now handle suboptions
@@ -619,23 +748,23 @@ if [ $ACTION -eq 1 -o $ACTION -eq 3 ]; then
 
         case $2 in
             "-n")
-            STYPE=1
-            ;;
+                STYPE=1
+                ;;
             "-i")
-            STYPE=2
-            ;;
+                STYPE=2
+                ;;
             "-c")
-            STYPE=3
-            ;;
+                STYPE=3
+                ;;
             "-f")
-            STYPE=9
-            ;;
+                STYPE=9
+                ;;
             "-h")
-            print_usage_message
-            ;;
+                print_usage_message
+                ;;
             *)
-            print_error_message "incorrect option"
-            ;;
+                print_error_message "incorrect option"
+                ;;
         esac
 
     fi
@@ -649,85 +778,85 @@ else
     case $2 in
         "-a")
 
-        if [ $NARGS -ne 3 ]; then
-            print_error_message "$1 $2 requires one option"
-        else
-            ETYPE=1
-            STATEMENT=$3
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=1
+                STATEMENT=$3
 
-            STATEMENT_SET=1
-        fi
-        ;;
+                STATEMENT_SET=1
+            fi
+            ;;
 
         "-s")
 
-        if [ $NARGS -ne 4 ]; then
-            print_error_message "$1 $2 requires two options"
-        else
-            ETYPE=2
-            STATUS_SYMB=$3
-            TAG=$4
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires two options"
+            else
+                ETYPE=2
+                STATUS_SYMB=$3
+                TAG=$4
 
-            TAG_SET=1
-            STATUS_SET=1
+                TAG_SET=1
+                STATUS_SET=1
 
-            case $STATUS_SYMB in
-                "n"|"N")
-                STATUS="(N)"
-                ;;
-                "i"|"I")
-                STATUS="(I)"
-                ;;
-                "c"|"C")
-                STATUS="(C)"
-                ;;
-                *)
-                print_error_message "status not specified correctly"
-                ;;
-            esac
+                case $STATUS_SYMB in
+                    "n"|"N")
+                        STATUS="(N)"
+                        ;;
+                    "i"|"I")
+                        STATUS="(I)"
+                        ;;
+                    "c"|"C")
+                        STATUS="(C)"
+                        ;;
+                    *)
+                        print_error_message "status not specified correctly"
+                        ;;
+                esac
 
 
-        fi
-        ;;
+            fi
+            ;;
 
 
         "-d")
 
-        if [ $NARGS -ne 3 ]; then
-            print_error_message "$1 $2 requires one option"
-        else
-            ETYPE=3
-            TAG=$3
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires one option"
+            else
+                ETYPE=3
+                TAG=$3
 
-            TAG_SET=1
+                TAG_SET=1
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-r")
 
-        if [ $NARGS -ne 2 ]; then
-            print_error_message "$1 $2 takes no argument"
-        else
-            ETYPE=4
-        fi
-        ;;
+            if [ $NARGS -ne 2 ]; then
+                print_error_message "$1 $2 takes no argument"
+            else
+                ETYPE=4
+            fi
+            ;;
 
         "-m")
 
-        if [ $NARGS -ne 4 ]; then
-            print_error_message "$1 $2 requires two options"
-        else
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires two options"
+            else
 
-            ETYPE=5
-            STATEMENT=$3
-            TAG=$4
+                ETYPE=5
+                STATEMENT=$3
+                TAG=$4
 
-            TAG_SET=1
-            STATEMENT_SET=1
+                TAG_SET=1
+                STATEMENT_SET=1
 
-        fi
-        ;;
+            fi
+            ;;
         "-f")
 
         if [ $NARGS -ne 3 ]; then
