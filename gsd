@@ -544,7 +544,7 @@ function search_phrase_entries {
     local _line
     local _ltype
 
-    declare -i _found_one
+    local _found_one=0
 
     for _n in `grep -i -n "$_phrase" $TODOFILE | cut -f1 -d:`
     do
