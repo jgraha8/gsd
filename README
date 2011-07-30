@@ -5,8 +5,8 @@ See the end of the file for license conditions.
                                SUMMARY
 =====================================================================
 
-TODO (todo) is a utility used to create, manage, and print to-do
-lists. It provides basic functionality such as:
+TODO (todo) is a command driven utility used to create, manage, and
+print to-do lists. It provides basic functionality such as:
 
 1) Adding, deleting, and modifying to-do items
 
@@ -17,6 +17,8 @@ lists. It provides basic functionality such as:
 
 4) Viewing and printing items for a given status to see all completed
    jobs, all new jobs, etc.
+
+5) Searching for entry items
 
 Currently only a single to-do list is created. In the future any
 number of lists will be able to be created and used so that you can
@@ -43,9 +45,9 @@ from the command line.
 
 To add your first items run:
 
-    todo edit -a "Learn how to use todo"
-    todo edit -a "Wash the dishes"
-    todo edit -a "Walk the dog"
+    todo add "Learn how to use todo" 
+    todo add "Wash the dishes" 
+    todo add "Walk the dog"
 
 To show the new entries, run:
 
@@ -59,7 +61,7 @@ and you should see the items that where entered as:
 
     3:(N): Walk the dog
 
-Each entry is composed of three parts: 
+Each entry is composed of three parts:
 
     <tag>:<status>: <statement>
 
@@ -102,11 +104,13 @@ ones then choose to view only these by:
     todo show -f
 
 You can also choose to print a list using the systems default printer
-(this requires the PRINTER environment variable to be set). To print the entire list run:
+(this requires the program "lpr" and the PRINTER environment variable
+to be set). To print the entire list run:
 
     todo print
 
-and this will print the contents you'd see from from "todo show". To print say only the flagged items run:
+and this will print the contents you'd see from from "todo show". To
+print say only the flagged items run:
 
     todo print -f
 
@@ -116,7 +120,12 @@ Once you are done with an item either mark it as complete with:
 
 or delete the item using:
 
-    todo edit -d <tag>
+    todo delete <tag>
+
+If you have numerous completed items and would like to delete them all
+at once run:
+
+    todo purge
 
 After you delete items you'll notice that the tag numbers remained the
 same and may not be continuous. This was done to ensure that if todo
@@ -124,7 +133,7 @@ is ran several times successively the tag number will remain the same
 and the wrong tags won't be referenced. To see this, let's delete item
 2 from our list with:
 
-    todo edit -d 2
+    todo delete 2
 
 to get:
 
@@ -133,8 +142,8 @@ to get:
     3:(N): Walk the dog
 
 from "todo show". Notice the tag numbers are 1 and 3, not 1 and
-2. Although not necessary, the tags can be put in successive order
-with:
+2. Although not necessary, it may be of convenience to put the tags in
+successive order with:
 
     todo edit -r
 
@@ -149,9 +158,21 @@ started.
 
 Enjoy.
 
-Please note I had already named this program "todo" before I saw the
-cutesy smartphone app. So no I did not rip off their name - I just
-removed the "-" from "to-do" :-)
+
+
+=====================================================================
+                           GENERAL COMMENTS
+=====================================================================
+
+1. Please note I had already named this program "todo" before I saw
+   the cutesy smartphone app. So no I did not rip off their name - I
+   just removed the "-" from "to-do" :-)
+
+2. Also after starting and finishing the first major part of this
+   project, it was realized that numerous utilities as this one exist
+   online. Up until now, no parts of this program have been borrowed
+   from any others; if at any point parts are borrowed it will be
+   noted here in this file.
 
 
 This file is part of todo
