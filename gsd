@@ -39,28 +39,32 @@ function print_usage_message {
     echo "Usage: $SCRIPTNAME command [command-options-and-arguments]"
     echo "Commands:"
     echo "  help                      Print this message"
-    echo "  show, -s                  Show TODO entries"
+    echo "  show                      Show TODO entries"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
     echo "      -i                    Show only entries with status incomplete"
     echo "      -c                    Show only entries with status complete"
-    echo "      -h                    Print this message"
-    echo "  edit, -e                  Edit TODO entries"
+    echo "      -f                    Show only flagged entries"
+#    echo "      -h                    Print this message"
+    echo "  add <statement>           Add new entry"
+    echo "  delete <tag>              Delete entry"
+    echo "  edit                      Edit TODO entries"
     echo "    Options:"
-    echo "      -a <statement>        Add entry"
     echo "      -s {N|I|C} <tag>      Change status of entry"
     echo "      -m <statement>        Change entry statement"
-    echo "      -d <tag>              Delete entry"
-    echo "      -r                    Reorder entry tags"
     echo "      -f <tag>              Toggle important flag"
-    echo "      -h                    Print this message"
-    echo "  print, -p                 Send TODO entries to printer"
+    echo "      -r                    Reorder entry tags"
+#    echo "      -h                    Print this message"
+    echo "  search <phrase>           Perform text search on entries"
+    echo "  purge                     Remove all completed entries"
+    echo "  print                     Send TODO entries to printer"
     echo "    Options:"
     echo "      -n                    Print only entries with status new"
     echo "      -i                    Print only entries with status incomplete"
     echo "      -c                    Print only entries with status complete"
-    echo "      -h                    Print this message"
-    echo "  version, -v               Show TODO version"
+    echo "      -f                    Print only flagged entries"
+#    echo "      -h                    Print this message"
+    echo "  version                   Show TODO version"
     exit 0
 }
 
@@ -259,7 +263,7 @@ function get_entry_line_number {
     local _line
     local _ltype
 
-    for _n in `grep -w -n "$_tag:" $TODOFILE | cut -f1 -d:`
+    for _n in `grep -n "$_tag:" $TODOFILE | cut -f1 -d:`
     do
 
         _line=$(sed -n ${_n}p $TODOFILE)
@@ -315,6 +319,11 @@ function print_last_entry_tag {
 ######################################################################
 # ACTION FUNCTIONS
 ######################################################################
+#
+# Each of these functions are required to be error checking and must
+# exit the program using print_error_message if an error is
+# encountered
+#
 
 #-------------------------------------------------------------------
 # PRINT_ENTRIES
@@ -473,6 +482,27 @@ function modify_entry_statement {
 }
 
 #-------------------------------------------------------------------
+# ADD_ENTRY
+#--------------------------------------------------------------------
+
+function add_entry {
+
+    local _statement="$1"
+    local _tag
+
+    _tag=$(print_last_entry_tag)
+    _tag=$((_tag+1))
+    echo "$_tag:(N): $_statement" >> $TODOFILE
+
+    if [ $? -eq 0 ]; then
+        return 0
+    else
+        print_error_message "unable to add new entry"
+    fi
+
+}
+
+#-------------------------------------------------------------------
 # DELETE_ENTRY
 #--------------------------------------------------------------------
 
@@ -498,6 +528,80 @@ function delete_entry {
     else
         rm -f $TODOFILE.tmp
     fi
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
+# SEARCH_PHRASE_ENTRIES
+#--------------------------------------------------------------------
+
+function search_phrase_entries {
+
+    local _phrase="$1"
+    local _n
+    local _line
+    local _ltype
+
+    declare -i _found_one
+
+    for _n in `grep -i -n "$_phrase" $TODOFILE | cut -f1 -d:`
+    do
+
+        _line=$(sed -n ${_n}p $TODOFILE)
+
+        check_line_type "$_line"
+        _ltype=$?
+
+        [ $_ltype -ne 0 -a $_ltype -ne 11 ] && _found_one=1 && print_entry "$_line" /dev/stdout
+
+    done
+
+    [ $_found_one -eq 1 ] && print_entry_divider
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
+# PURGE_COMPLETED_ENTRIES
+#--------------------------------------------------------------------
+
+function purge_completed_entries {
+
+    local _ltype
+    local _line
+
+    # Get all suspicious lines; notice the sort -nr at the end - we
+    # must delete them in reverse order other wise we'll delete the
+    # wrong lines since things are shifted upwards after a delete
+    for _linenumber in `grep -n ":(C):" $TODOFILE | cut -f1 -d: | sort -nr`
+    do
+        # Read the line
+        _line=$(sed -n ${_linenumber}p $TODOFILE)
+
+        check_line_type "$_line"
+        _ltype=$?
+
+        # Make sure its a valid entry
+        if [ $_ltype -eq 3 -o $_ltype -eq 39 ]; then
+
+            # Delete the entry in the todo file
+            sed -i.tmp "$_linenumber d" $TODOFILE
+
+            if [ $? -ne 0 ]; then
+                cp $TODOFILE.tmp $TODOFILE
+                print_error_message "could not delete entry"
+            else
+
+                rm -f $TODOFILE.tmp
+
+            fi
+
+        fi
+
+    done
 
     return 0
 
@@ -600,56 +704,69 @@ function toggle_important_flag {
 
     return 0
 
-}
+        }
 
 #####################################################################
 # MAIN
 #####################################################################
 
 # First check that the TODO file exists and is readable
-if [ ! -f $TODOFILE ]; then
-    touch $TODOFILE
-    [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
-fi
+        if [ ! -f $TODOFILE ]; then
+            touch $TODOFILE
+            [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
+        fi
 
-declare -i STYPE=0
-declare -i ETYPE=0
-declare -i ACTION=0
+        declare -i STYPE=0
+        declare -i ETYPE=0
+        declare -i ACTION=0
 
-declare -i TAG_SET=0
-declare -i STATUS_SET=0
-declare -i STATEMENT_SET=0
-
-NARGS=$#
-if [ $NARGS -lt 1 ]; then
-    print_error_message "action not specified"
-fi
+        NARGS=$#
+        if [ $NARGS -lt 1 ]; then
+            print_error_message "action not specified"
+        fi
 
     # First argument should be the action
-case $1 in
-    "show"|"-s")
-            ACTION=1
-            ;;
-    "edit"|"-e")
-            ACTION=2
-            ;;
-    "print"|"-p")
-            ACTION=3
-            ;;
-    "help"|"-h")
-            print_usage_message
-            ;;
-    "version"|"-v")
-            print_version
-            ;;
-    *)
-            print_error_message "action not specified correctly"
-            ;;
+        case $1 in
+            "show"|"-s")
+ACTION=1
+;;
+"add"|"-a")
+ACTION=2
+;;
+"delete"|"-d")
+ACTION=3
+;;
+"edit"|"-e")
+ACTION=4
+;;
+"search")
+ACTION=5
+;;
+"purge")
+ACTION=6
+;;
+"print"|"-p")
+ACTION=9
+;;
+"help"|"-h")
+print_usage_message
+;;
+"version"|"-v")
+print_version
+;;
+*)
+print_error_message "action not specified correctly"
+;;
 esac
 
-    # Now handle suboptions
-if [ $ACTION -eq 1 -o $ACTION -eq 3 ]; then
+# Now handle suboptions
+if [ $ACTION -eq 0 ]; then
 
+    print_error_message "no action specified"
+
+elif [ $ACTION -eq 1 -o $ACTION -eq 9 ]; then
+
+    # Showing or printing
     if [ $NARGS -gt 1 ]; then
 
         if [ $NARGS -gt 2 ]; then
@@ -658,190 +775,145 @@ if [ $ACTION -eq 1 -o $ACTION -eq 3 ]; then
 
         case $2 in
             "-n")
-                STYPE=1
-                ;;
+            STYPE=1
+            ;;
             "-i")
-                STYPE=2
-                ;;
+            STYPE=2
+            ;;
             "-c")
-                STYPE=3
-                ;;
+            STYPE=3
+            ;;
             "-f")
-                STYPE=9
-                ;;
+            STYPE=9
+            ;;
             "-h")
-                print_usage_message
-                ;;
+            print_usage_message
+            ;;
             *)
-                print_error_message "incorrect option"
-                ;;
+            print_error_message "incorrect option"
+            ;;
         esac
 
     fi
 
-else
+    if [ $ACTION -eq 1 ]; then
 
-    if [ $NARGS == 1 ]; then
-        print_error_message "$1 requires option"
+        print_entries $STYPE /dev/stdout
+
+    else
+
+        print_entries_to_printer $STYPE
+
     fi
 
-    case $2 in
-        "-a")
-
-            if [ $NARGS -ne 3 ]; then
-                print_error_message "$1 $2 requires one option"
-            else
-                ETYPE=1
-                STATEMENT=$3
-
-                STATEMENT_SET=1
-            fi
-            ;;
-
-        "-s")
-
-            if [ $NARGS -ne 4 ]; then
-                print_error_message "$1 $2 requires two options"
-            else
-                ETYPE=2
-                STATUS_SYMB=$3
-                TAG=$4
-
-                TAG_SET=1
-                STATUS_SET=1
-
-                case $STATUS_SYMB in
-                    "n"|"N")
-                        STATUS="(N)"
-                        ;;
-                    "i"|"I")
-                        STATUS="(I)"
-                        ;;
-                    "c"|"C")
-                        STATUS="(C)"
-                        ;;
-                    *)
-                        print_error_message "status not specified correctly"
-                        ;;
-                esac
-
-
-            fi
-            ;;
-
-
-        "-d")
-
-            if [ $NARGS -ne 3 ]; then
-                print_error_message "$1 $2 requires one option"
-            else
-                ETYPE=3
-                TAG=$3
-
-                TAG_SET=1
-
-            fi
-            ;;
-
-        "-r")
-
-            if [ $NARGS -ne 2 ]; then
-                print_error_message "$1 $2 takes no argument"
-            else
-                ETYPE=4
-            fi
-            ;;
-
-        "-m")
-
-            if [ $NARGS -ne 4 ]; then
-                print_error_message "$1 $2 requires two options"
-            else
-
-                ETYPE=5
-                STATEMENT=$3
-                TAG=$4
-
-                TAG_SET=1
-                STATEMENT_SET=1
-
-            fi
-            ;;
-        "-f")
-
-            if [ $NARGS -ne 3 ]; then
-                print_error_message "$1 $2 requires one option"
-            else
-                ETYPE=6
-                TAG=$3
-                TAG_SET=1
-            fi
-            ;;
-
-        "-h")
-            print_usage_message
-            ;;
-
-        *)
-            print_error_message "not a valid edit option"
-            ;;
-
-    esac
-
-fi
-
-# Now check arguments
-if [ $ACTION -eq 0 ]; then
-    print_error_message "no action specified"
-elif [ $ACTION -eq 1 -o $ACTION -eq 3 ]; then
-    [ $ETYPE -ne 0 ] && print_error_message "do not specify edit option with option show"
 elif [ $ACTION -eq 2 ]; then
-    [ $STYPE -ne 0 ] && print_error_message "do not specify show option with option edit"
-else
-    print_error_message "incorrect action specified"
-fi
 
-
-if [ $ACTION -eq 1 ]; then
-
-    print_entries $STYPE /dev/stdout
+    [ $NARGS -ne 2 ] && print_error_message "$1 requires <tag>"
+    # Append new entry
+    add_entry "$2"
 
 elif [ $ACTION -eq 3 ]; then
 
-    print_entries_to_printer $STYPE
+    [ $NARGS -ne 2 ] && print_error_message "$1 requires <tag>"
+
+    delete_entry "$2"
+
+elif [ $ACTION -eq 4 ]; then
+
+    # Edit entry
+
+    if [ $NARGS == 1 ]; then
+        print_error_message "$1 requires at least option"
+    fi
+
+    case $2 in
+
+        "-s")
+
+        if [ $NARGS -ne 4 ]; then
+            print_error_message "$1 $2 requires <status> <tag>"
+        else
+
+            STATUS_SYMB=$3
+            TAG=$4
+
+            case $STATUS_SYMB in
+                "n"|"N")
+                STATUS="(N)"
+                ;;
+                "i"|"I")
+                STATUS="(I)"
+                ;;
+                "c"|"C")
+                STATUS="(C)"
+                ;;
+                *)
+                print_error_message "status not specified correctly"
+                ;;
+            esac
+
+
+        fi
+
+            # Modify entry
+        modify_entry_status "$STATUS" "$TAG"
+        ;;
+
+        "-m")
+
+        if [ $NARGS -ne 4 ]; then
+            print_error_message "$1 $2 requires <statement> <tag>"
+        else
+
+            STATEMENT=$3
+            TAG=$4
+
+            modify_entry_statement "$STATEMENT" "$TAG"
+
+        fi
+        ;;
+
+        "-f")
+
+        if [ $NARGS -ne 3 ]; then
+            print_error_message "$1 $2 requires <tag>"
+        else
+
+            TAG=$3
+            toggle_important_flag "$TAG"
+
+        fi
+        ;;
+
+        "-r")
+        reorder_entry_tags
+        ;;
+
+        "-h")
+        print_usage_message
+        ;;
+
+        *)
+        print_error_message "not a valid edit option"
+        ;;
+
+    esac
+
+elif [ $ACTION -eq 5 ]; then
+
+    [ $NARGS -ne 2 ] && print_error_message "$1 requires search phrase"
+    search_phrase_entries "$2"
+
+elif [ $ACTION -eq 6 ]; then
+
+    [ $NARGS -ne 1 ] && print_error_message "$1 takes no arguments"
+    # Purge all entries with status complete
+    purge_completed_entries
 
 else
 
-    case $ETYPE in
-
-        0) #
-            print_error_message "no edit option specified"
-            ;;
-        1)
-            TAG=$(print_last_entry_tag)
-            TAG=$((TAG+1))
-            echo "$TAG:(N): $STATEMENT" >> $TODOFILE
-            ;;
-        2)
-            # Need to modify entry
-            [ $STATUS_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_status "$STATUS" "$TAG"
-            ;;
-        3)
-            [ $TAG_SET -eq 1 ] && delete_entry "$TAG"
-            ;;
-        4)
-            reorder_entry_tags
-            ;;
-        5)
-            [ $STATEMENT_SET -eq 1 -a $TAG_SET -eq 1 ] && modify_entry_statement "$STATEMENT" "$TAG"
-            ;;
-        6)
-            [ $TAG_SET -eq 1 ] && toggle_important_flag "$TAG"
-            ;;
-    esac
-
+    print_error_message "action not specified correctly"
 
 fi
-
 
 exit 0
