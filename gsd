@@ -23,9 +23,48 @@
 #
 ############################################################################
 
+# Adjust text colors based on terminal background
+DARK_BACKGROUND="yes"
+
 SCRIPTNAME=`basename "$0"`
-TODOFILE="$HOME/.todo"
+TODODIR="$HOME/.todo"
+TODODEFAULT="$TODODIR/default.lst"
 TODOVERSION="cvs"
+
+# Attribute codes:
+# 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
+
+# Text color codes:
+# 30=black 31=red 32=green 33=yellow 34=blue 35=magenta 36=cyan 37=white
+
+# Background color codes:
+# 40=black 41=red 42=green 43=yellow 44=blue 45=magenta 46=cyan 47=white
+
+# COLOR="<attribute>;<text>;<background>"
+
+BLACK="01;30"
+RED="01;31"
+GREEN="01;32"
+YELLOW="01;33"
+BLUE='01;34'
+MAGENTA="01;35"
+CYAN="01;36"
+
+# Specify colors for new, incomplete, completed and flagged
+if [[ "$DARK_BACKGROUND" == "yes" ]]; then
+    COLOR_NEW="\e[${BLUE}m"
+    COLOR_INCOMPLETE="\e[${YELLOW}m"
+    COLOR_COMPLETE="\e[${GREEN}m"
+else
+    COLOR_NEW="\e[${BLUE}m"
+    COLOR_INCOMPLETE="\e[${CYAN}m"
+    COLOR_COMPLETE="\e[${MAGENTA}m"
+fi
+
+
+COLOR_FLAG="\e[${RED}m"
+COLOR_LIST="\e[${BLUE}m"
+COLOR_END="\e[0m"
 
 #####################################################################
 # STDOUT PRINT FUNCTIONS
@@ -36,9 +75,13 @@ TODOVERSION="cvs"
 #---------------------------------------------------------------------
 
 function print_usage_message {
-    echo "Usage: $SCRIPTNAME command [command-options-and-arguments]"
+    echo "Usage: $SCRIPTNAME [options] command [command-options-and-arguments]"
+    echo "Options:"
+    echo "  -l <list>                 Specify with TODO list to use"
+    echo " "
     echo "Commands:"
     echo "  help                      Print this message"
+    echo " "
     echo "  show                      Show TODO entries"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
@@ -46,8 +89,11 @@ function print_usage_message {
     echo "      -c                    Show only entries with status complete"
     echo "      -f                    Show only flagged entries"
 #    echo "      -h                    Print this message"
+    echo " "
     echo "  add <statement>           Add new entry"
+    echo " "
     echo "  delete <tag>              Delete entry"
+    echo " "
     echo "  edit                      Edit TODO entries"
     echo "    Options:"
     echo "      -s {N|I|C} <tag>      Change status of entry"
@@ -55,8 +101,11 @@ function print_usage_message {
     echo "      -f <tag>              Toggle important flag"
     echo "      -r                    Reorder entry tags"
 #    echo "      -h                    Print this message"
+    echo " "
     echo "  search <phrase>           Perform text search on entries"
+    echo " "
     echo "  purge                     Remove all completed entries"
+    echo " "
     echo "  print                     Send TODO entries to printer"
     echo "    Options:"
     echo "      -n                    Print only entries with status new"
@@ -64,6 +113,11 @@ function print_usage_message {
     echo "      -c                    Print only entries with status complete"
     echo "      -f                    Print only flagged entries"
 #    echo "      -h                    Print this message"
+    echo " "
+    echo "  lists                     Show which TODO lists are available"
+    echo " "
+    echo "  deletelist <list>         Delete specified TODO list"
+    echo " "
     echo "  version                   Show TODO version"
     exit 0
 }
@@ -108,10 +162,44 @@ function print_entry_divider {
 
 function print_entry {
 
+    declare -i _ltype
+    declare -i _flagged
+
+    local _ltype=$1
+    local _line="$2"
+
+    local _tag=$(print_entry_tag "$_line")
+    local _status=$(print_entry_status "$_line")
+    local _flag=$(print_entry_flag "$_line")
+    local _statement=$(print_entry_statement "$_line")
+
     print_entry_divider
     # Indent one space
     echo -n " "
-    echo $1
+
+    check_important_flag "$_line"
+    if [ $? -eq 1 ]; then
+        _flag_print="$COLOR_FLAG$_flag$COLOR_END "
+    else
+        _flag_print=""
+    fi
+
+    case $_ltype in
+
+        1|19)
+            echo -e "$_tag $COLOR_NEW$_status$COLOR_END : $_flag_print$_statement"
+            ;;
+        2|29)
+            echo -e "$_tag $COLOR_INCOMPLETE$_status$COLOR_END : $_flag_print$_statement"
+            ;;
+        3|39)
+            echo -e "$_tag $COLOR_COMPLETE$_status$COLOR_END : $_flag_print$_statement"
+            ;;
+        *)
+            print_error_message "incorrect entry type"
+            ;;
+    esac
+
     return 0
 }
 
@@ -124,10 +212,11 @@ function print_entry {
 #--------------------------------------------------------------------
 
 function print_entry_tag {
+
     local _line="$1"
     local _tag
 
-    _tag="`echo $_line | cut -d ':' -f 1`"
+    _tag="`echo $_line | cut -d: -f 1`"
     echo $_tag
 }
 
@@ -139,9 +228,22 @@ function print_entry_status {
     local _line="$1"
     local _status
 
-    _status="`echo $_line | cut -d ':' -f 2`"
+    _status="`echo $_line | cut -d: -f 2`"
     echo $_status
 }
+
+#-------------------------------------------------------------------
+# PRINT_ENTRY_FLAG
+#--------------------------------------------------------------------
+
+function print_entry_flag {
+    local _line="$1"
+    local _status
+
+    _status="`echo $_line | cut -d: -f 3`"
+    echo $_status
+}
+
 
 #-------------------------------------------------------------------
 # PRINT_ENTRY_STATEMENT
@@ -149,19 +251,21 @@ function print_entry_status {
 
 function print_entry_statement {
 
+    local _tag
+    local _status
+    local _flag
 
     # This function assumes that a valid line is provided
     local  _line="$1"
-    local _tag
-    local _status
     local _statement
 
     _tag=$(print_entry_tag "$_line")
     _status=$(print_entry_status "$_line")
+    _flag=$(print_entry_flag "$_line")
 
-    # Trim front material; avoiding the usage of soley : as a
-    # delimiter so it can exist in text
-    _statement=${_line#"$_tag:$_status: "}
+    # Trim leading part of string instead of using delimiter so that
+    # the statement can contain the delimiter
+    _statement=${_line#"$_tag:$_status:$_flag:"*}
     echo $_statement
 
 }
@@ -175,14 +279,15 @@ function print_entry_statement {
 #--------------------------------------------------------------------
 
 function check_important_flag {
+
     # For safety only valid statements should call this
     local _line="$1"
-    local _statement
+    local _flag
 
-    _statement=$(print_entry_statement "$_line")
+    _flag=$(print_entry_flag "$_line")
 
     # First see if the statement is marked as important
-    if [[ "$_statement" == *'(*)'* ]]; then
+    if [[ "$_flag" == "(*)" ]]; then
         return 1
     else
         return 0
@@ -236,7 +341,7 @@ function check_line_type {
             print_error_message "line in TODO not formatted correctly"
     esac
 
-    check_important_flag "$_statement"
+    check_important_flag "$_line"
     _flagged=$?
 
     case $_flagged in
@@ -334,6 +439,7 @@ function print_entries {
     local _stype=$1
     local _printloc="$2"
     local _ltype
+    local _flagged
     local _line
 
     declare -i _printed_one
@@ -352,19 +458,19 @@ function print_entries {
             case $_stype in
                 0)
                     # Print all valid entries
-                    print_entry "$_line" >> "$_printloc"
+                    print_entry $_ltype "$_line" >> "$_printloc"
                     ;;
                 1)
-                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry "$_line" >> "$_printloc"
+                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && print_entry $_ltype "$_line" >> "$_printloc"
                     ;;
                 2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry "$_line" >> "$_printloc"
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && print_entry $_ltype "$_line" >> "$_printloc"
                     ;;
                 3)
-                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry "$_line" >> "$_printloc"
+                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && print_entry $_ltype "$_line" >> "$_printloc"
                     ;;
                 9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry "$_line" >> "$_printloc"
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && print_entry $_ltype "$_line" >> "$_printloc"
                     ;;
             esac
 
@@ -392,10 +498,11 @@ function print_entries_to_printer {
     [ $? -ne 0 ] && print_error_message "cannot create temporary file"
 
     # Print contents to temporary file
-    print_entries $_stype "$TODOFILE.tmp"
+    print_entries $_stype /dev/stdout >> lpr -p
 
     # Send to printer; requires $PRINTER to be set
-    cat $TODOFILE.tmp | lpr -p
+
+#    cat $TODOFILE.tmp >> /dev/stdout | lpr -p
 
     [ $? -ne 0 ] && print_error_message "unable to print"
 
@@ -421,11 +528,13 @@ function modify_entry_status {
 
     _line=$(sed -n ${_linenumber}p $TODOFILE)
 
+    _flag=$(print_entry_statement "$_line")
     # Extract the statement
     _statement=$(print_entry_statement "$_line")
 
     # Update the entry in the todo file
-    sed -i.tmp "$_linenumber c$_tag:$_status: $_statement" $TODOFILE
+
+    sed -i.tmp "$_linenumber c$_tag:$_status:$_flag:$_statement" $TODOFILE
 
     if [ $? -ne 0 ]; then
         cp $TODOFILE.tmp $TODOFILE
@@ -454,18 +563,16 @@ function modify_entry_statement {
     get_entry_line_number "$_tag"
     _linenumber=$?
 
+    # Extract the line
     _line=$(sed -n ${_linenumber}p $TODOFILE)
 
     # Extract the status
     _status=$(print_entry_status "$_line")
+    # Extract flag
+    _flag=$(print_entry_flag "$_line")
 
-    check_important_flag $(print_entry_statement "$_line")
-
-    if [ $? -eq 1 ]; then
-        _line="$_tag:$_status: (*) $_statement"
-    else
-        _line="$_tag:$_status: $_statement"
-    fi
+    # Generate entry
+    _line="$_tag:$_status:$_flag:$_statement"
 
     # Update the entry in the todo file
     sed -i.tmp "$_linenumber c$_line" $TODOFILE
@@ -492,7 +599,7 @@ function add_entry {
 
     _tag=$(print_last_entry_tag)
     _tag=$((_tag+1))
-    echo "$_tag:(N): $_statement" >> $TODOFILE
+    echo "$_tag:(N):<NULL>:$_statement" >> $TODOFILE
 
     if [ $? -eq 0 ]; then
         return 0
@@ -537,13 +644,15 @@ function delete_entry {
 # SEARCH_PHRASE_ENTRIES
 #--------------------------------------------------------------------
 
-function search_phrase_entries {
+function search_entries {
 
     local _phrase="$1"
     local _n
     local _line
     local _ltype
+    local _flagged
 
+    declare -i _found_one
     local _found_one=0
 
     for _n in `grep -i -n "$_phrase" $TODOFILE | cut -f1 -d:`
@@ -554,7 +663,19 @@ function search_phrase_entries {
         check_line_type "$_line"
         _ltype=$?
 
-        [ $_ltype -ne 0 -a $_ltype -ne 11 ] && _found_one=1 && print_entry "$_line" /dev/stdout
+        if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
+
+            # Make sure what we found is in the statement
+            _statement=$(print_entry_statement "$_line")
+            if [[ "$_statement" == *"$_phrase"* ]]; then
+
+                _found_one=1
+                print_entry $_ltype "$_line" >> /dev/stdout
+
+            fi
+
+        fi
+
 
     done
 
@@ -616,6 +737,7 @@ function reorder_entry_tags {
     # This function reorders ("sequentializes") them and has the nice
     # side-effect of removing blank lines
 
+    local _flag
     local _status
     local _statement
     local _ltype
@@ -641,8 +763,9 @@ function reorder_entry_tags {
             # Check if this is our tag
             _tag=$((_tag+1))
             _status=$(print_entry_status "$line")
+            _flag=$(print_entry_flag "$_line")
             _statement=$(print_entry_statement "$line")
-            echo "$_tag:$_status: $_statement" >> $TODOFILE.tmp
+            echo "$_tag:$_status:$_flag:$_statement" >> $TODOFILE.tmp
 
         fi
 
@@ -664,6 +787,7 @@ function toggle_important_flag {
     local _tag="$1"
 
     local _status
+    local _flag
     local _statement
 
     local _line
@@ -679,18 +803,17 @@ function toggle_important_flag {
     _statement=$(print_entry_statement "$_line")
 
     # First see if the statement is marked as important
-    check_important_flag "$_statement"
+    check_important_flag "$_line"
 
     if [ $? -eq 1 ]; then
-        # Trim old flag
-        _statement=${_statement#'(*)'}
+        _flag="<NULL>"
     else
+        _flag="(*)"
         # Add important tag
-        _statement="(*) $_statement"
     fi
 
     # Reconstruct the line
-    _line="$_tag:$_status: $_statement"
+    _line="$_tag:$_status:$_flag:$_statement"
 
     # Update the entry in the todo file
     sed -i.tmp "$_linenumber c$_line" $TODOFILE
@@ -704,59 +827,184 @@ function toggle_important_flag {
 
     return 0
 
-        }
+}
+
+#####################################################################
+# LISTS FUNCTIONS
+#####################################################################
+
+#-------------------------------------------------------------------
+# SHOW_AVAILABLE_LISTS
+#--------------------------------------------------------------------
+
+function show_available_lists {
+
+    local _list
+
+    for _list in `ls $TODODIR/*.lst 2> /dev/null`
+    do
+        _list=`basename "$_list"`
+        echo ${_list%.*}
+    done
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
+# DELETE_LIST
+#--------------------------------------------------------------------
+
+function delete_list {
+
+    local _list="$1"
+
+    case $_list in
+        "default")
+            _todofile="$TODODEFAULT"
+            ;;
+        *)
+            _todofile="$TODODEFAULT-$_list"
+            ;;
+    esac
+
+    if [ ! -f "$_todofile" ]; then
+        print_error_message "specified list does not exisit"
+    else
+        rm $_todofile
+    fi
+
+    return 0
+
+}
+
+#---------------------------------------------------------------------
+# PRINT_ENTRIES_ALL_LISTS
+#---------------------------------------------------------------------
+
+function print_entries_all_lists {
+
+    local _stype=$1
+    local _printloc="$2"
+    local _list
+
+    # Get all available lists
+    for _list in `show_available_lists`
+    do
+        echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
+        TODOFILE="${TODODIR}/${_list}.lst"
+        print_entries $1 "$_printloc"
+
+    done
+
+}
+
+#---------------------------------------------------------------------
+# SEARCH_ENTRIES_ALL_LISTS
+#---------------------------------------------------------------------
+
+function search_entries_all_lists {
+
+    local _phrase="$1"
+    local _list
+
+    # Get all available lists
+    for _list in `show_available_lists`
+    do
+        echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
+        TODOFILE="${TODODIR}/${_list}.lst"
+        search_entries "$_phrase"
+
+    done
+
+}
+
 
 #####################################################################
 # MAIN
 #####################################################################
 
 # First check that the TODO file exists and is readable
-        if [ ! -f $TODOFILE ]; then
-            touch $TODOFILE
-            [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
-        fi
+if [ ! -d $TODODIR ]; then
+    mkdir $TODODIR
+    [ $? -ne 0 ] && print_error_message "unable to create $TODODIR"
+fi
 
-        declare -i STYPE=0
-        declare -i ETYPE=0
-        declare -i ACTION=0
+# Now see if a list was specified
+if [[ $1 == "-l" ]]; then
 
-        NARGS=$#
-        if [ $NARGS -lt 1 ]; then
-            print_error_message "action not specified"
-        fi
+    TODOFILE="$TODODIR/$2.lst"
+    # Shift 2 places in the argument list
+    shift 2
+
+else
+
+    TODOFILE="$TODODEFAULT"
+
+fi
+
+# Now check if list exist; if not create it
+if [ ! -f $TODOFILE ]; then
+    touch "$TODOFILE"
+    [ $? -ne 0 ] && print_error_message "unable to create $TODOFILE"
+fi
+
+declare -i STYPE=0
+declare -i ETYPE=0
+declare -i ACTION=0
+
+NARGS=$#
+if [ $NARGS -lt 1 ]; then
+    print_error_message "action not specified"
+fi
 
     # First argument should be the action
-        case $1 in
-            "show"|"-s")
-ACTION=1
-;;
-"add"|"-a")
-ACTION=2
-;;
-"delete"|"-d")
-ACTION=3
-;;
-"edit"|"-e")
-ACTION=4
-;;
-"search")
-ACTION=5
-;;
-"purge")
-ACTION=6
-;;
-"print"|"-p")
-ACTION=9
-;;
-"help"|"-h")
-print_usage_message
-;;
-"version"|"-v")
-print_version
-;;
-*)
-print_error_message "action not specified correctly"
-;;
+case $1 in
+    "show"|"-s")
+            ACTION=1
+            ;;
+    "add"|"-a")
+            ACTION=2
+            ;;
+    "delete"|"-d")
+            ACTION=3
+            ;;
+    "edit"|"-e")
+            ACTION=4
+            ;;
+    "search")
+            ACTION=5
+            ;;
+    "purge")
+            ACTION=6
+            ;;
+    "lists")
+            ACTION=7
+            ;;
+    "deletelist")
+            ACTION=8
+            ;;
+    "showlists")
+            ACTION=9
+            ;;
+    "searchlists")
+            ACTION=10
+            ;;
+    "print"|"-p")
+            ACTION=19
+            ;;
+    "printlists")
+            ACTION=20
+            ;;           
+    "help"|"-h")
+            print_usage_message
+            ;;
+    "version"|"-v")
+            print_version
+            ;;
+    *)
+            print_error_message "action not specified correctly"
+            ;;
 esac
 
 # Now handle suboptions
@@ -764,7 +1012,7 @@ if [ $ACTION -eq 0 ]; then
 
     print_error_message "no action specified"
 
-elif [ $ACTION -eq 1 -o $ACTION -eq 9 ]; then
+elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; then
 
     # Showing or printing
     if [ $NARGS -gt 1 ]; then
@@ -775,23 +1023,23 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 ]; then
 
         case $2 in
             "-n")
-            STYPE=1
-            ;;
+                STYPE=1
+                ;;
             "-i")
-            STYPE=2
-            ;;
+                STYPE=2
+                ;;
             "-c")
-            STYPE=3
-            ;;
+                STYPE=3
+                ;;
             "-f")
-            STYPE=9
-            ;;
+                STYPE=9
+                ;;
             "-h")
-            print_usage_message
-            ;;
+                print_usage_message
+                ;;
             *)
-            print_error_message "incorrect option"
-            ;;
+                print_error_message "incorrect option"
+                ;;
         esac
 
     fi
@@ -800,9 +1048,16 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 ]; then
 
         print_entries $STYPE /dev/stdout
 
-    else
+    elif [ $ACTION -eq 9 ]; then
+
+        print_entries_all_lists $STYPE /dev/stdout
+
+    elif [ $ACTION -eq 19 ]; then
 
         print_entries_to_printer $STYPE
+
+    else
+        print_entries_all_lists_to_printer $STYPE
 
     fi
 
@@ -830,79 +1085,79 @@ elif [ $ACTION -eq 4 ]; then
 
         "-s")
 
-        if [ $NARGS -ne 4 ]; then
-            print_error_message "$1 $2 requires <status> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires <status> <tag>"
+            else
 
-            STATUS_SYMB=$3
-            TAG=$4
+                STATUS_SYMB=$3
+                TAG=$4
 
-            case $STATUS_SYMB in
-                "n"|"N")
-                STATUS="(N)"
-                ;;
-                "i"|"I")
-                STATUS="(I)"
-                ;;
-                "c"|"C")
-                STATUS="(C)"
-                ;;
-                *)
-                print_error_message "status not specified correctly"
-                ;;
-            esac
+                case $STATUS_SYMB in
+                    "n"|"N")
+                        STATUS="(N)"
+                        ;;
+                    "i"|"I")
+                        STATUS="(I)"
+                        ;;
+                    "c"|"C")
+                        STATUS="(C)"
+                        ;;
+                    *)
+                        print_error_message "status not specified correctly"
+                        ;;
+                esac
 
 
-        fi
+            fi
 
             # Modify entry
-        modify_entry_status "$STATUS" "$TAG"
-        ;;
+            modify_entry_status "$STATUS" "$TAG"
+            ;;
 
         "-m")
 
-        if [ $NARGS -ne 4 ]; then
-            print_error_message "$1 $2 requires <statement> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                print_error_message "$1 $2 requires <statement> <tag>"
+            else
 
-            STATEMENT=$3
-            TAG=$4
+                STATEMENT=$3
+                TAG=$4
 
-            modify_entry_statement "$STATEMENT" "$TAG"
+                modify_entry_statement "$STATEMENT" "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-f")
 
-        if [ $NARGS -ne 3 ]; then
-            print_error_message "$1 $2 requires <tag>"
-        else
+            if [ $NARGS -ne 3 ]; then
+                print_error_message "$1 $2 requires <tag>"
+            else
 
-            TAG=$3
-            toggle_important_flag "$TAG"
+                TAG=$3
+                toggle_important_flag "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-r")
-        reorder_entry_tags
-        ;;
+            reorder_entry_tags
+            ;;
 
         "-h")
-        print_usage_message
-        ;;
+            print_usage_message
+            ;;
 
         *)
-        print_error_message "not a valid edit option"
-        ;;
+            print_error_message "not a valid edit option"
+            ;;
 
     esac
 
 elif [ $ACTION -eq 5 ]; then
 
     [ $NARGS -ne 2 ] && print_error_message "$1 requires search phrase"
-    search_phrase_entries "$2"
+    search_entries "$2"
 
 elif [ $ACTION -eq 6 ]; then
 
@@ -910,6 +1165,22 @@ elif [ $ACTION -eq 6 ]; then
     # Purge all entries with status complete
     purge_completed_entries
 
+elif [ $ACTION -eq 7 ]; then
+        # Show available lists
+    [ $NARGS -ne 1 ] && print_error_message "$1 takes no arguments"
+    show_available_lists
+
+elif [ $ACTION -eq 8 ]; then
+        # Delete specified list
+    [ $NARGS -ne 2 ] && print_error_message "$1 requires <list>"
+    delete_list "$2"
+
+
+elif [ $ACTION -eq 10 ]; then
+
+    [ $NARGS -ne 2 ] && print_error_message "$1 requires search phrase"
+    search_entries_all_lists "$2"
+    
 else
 
     print_error_message "action not specified correctly"
