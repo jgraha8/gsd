@@ -576,7 +576,7 @@ function modify_entry_status {
 
     _line=$(sed -n ${_linenumber}p $TODOFILE)
 
-    _flag=$(show_entry_statement "$_line")
+    _flag=$(show_entry_flag "$_line")
     # Extract the statement
     _statement=$(show_entry_statement "$_line")
 
@@ -917,7 +917,7 @@ function delete_list {
             _todofile="$TODODEFAULT"
             ;;
         *)
-            _todofile="$TODODEFAULT-$_list"
+            _todofile="${TODODIR}/${_list}.lst"
             ;;
     esac
 
@@ -993,7 +993,6 @@ function purge_completed_entries_all_lists {
 
     return 0
     
-
 }
 
 #---------------------------------------------------------------------
