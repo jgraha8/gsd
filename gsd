@@ -66,6 +66,26 @@ COLOR_FLAG="\e[${RED}m"
 COLOR_LIST="\e[${BLUE}m"
 COLOR_END="\e[0m"
 
+
+######################################################################
+# STANDARD FUNCTIONS
+######################################################################
+
+#---------------------------------------------------------------------
+# LOWERCASE
+#---------------------------------------------------------------------
+
+function lowercase {
+    # Converts all chracters in string to lower case
+    local _string="$1"
+
+    _string=$(echo $_string|tr [:upper:] [:lower:])
+    echo $_string
+
+    return 0
+
+}
+
 #####################################################################
 # STDOUT PRINT FUNCTIONS
 #####################################################################
@@ -154,6 +174,21 @@ function print_entry_divider {
     # echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
     # echo "<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>"
     # echo " "
+}
+
+#-------------------------------------------------------------------
+# PRINT_WORKING_LIST
+#--------------------------------------------------------------------
+
+function print_working_list {
+
+    _list=$(basename "$TODOFILE")
+    _list=${_list%.*}
+
+    echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
+
+    return 0
+
 }
 
 #---------------------------------------------------------------------
@@ -441,9 +476,12 @@ function print_entries {
     local _ltype
     local _flagged
     local _line
+    local _list
 
     declare -i _printed_one
     local _printed_one=0
+
+    print_working_list
 
     while read _line; do
 
@@ -655,6 +693,8 @@ function search_entries {
     declare -i _found_one
     local _found_one=0
 
+    print_working_list
+
     for _n in `grep -i -n "$_phrase" $TODOFILE | cut -f1 -d:`
     do
 
@@ -667,6 +707,10 @@ function search_entries {
 
             # Make sure what we found is in the statement
             _statement=$(print_entry_statement "$_line")
+            # Make statement all lower case
+            _statement=$(lowercase "$_statement")
+            _phrase=$(lowercase "$_phrase")
+
             if [[ "$_statement" == *"$_phrase"* ]]; then
 
                 _found_one=1
@@ -675,7 +719,6 @@ function search_entries {
             fi
 
         fi
-
 
     done
 
@@ -891,7 +934,6 @@ function print_entries_all_lists {
     # Get all available lists
     for _list in `show_available_lists`
     do
-        echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
         TODOFILE="${TODODIR}/${_list}.lst"
         print_entries $1 "$_printloc"
 
@@ -911,7 +953,7 @@ function search_entries_all_lists {
     # Get all available lists
     for _list in `show_available_lists`
     do
-        echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
+
         TODOFILE="${TODODIR}/${_list}.lst"
         search_entries "$_phrase"
 
@@ -961,50 +1003,50 @@ fi
     # First argument should be the action
 case $1 in
     "show"|"-s")
-            ACTION=1
-            ;;
+    ACTION=1
+    ;;
     "add"|"-a")
-            ACTION=2
-            ;;
+    ACTION=2
+    ;;
     "delete"|"-d")
-            ACTION=3
-            ;;
+    ACTION=3
+    ;;
     "edit"|"-e")
-            ACTION=4
-            ;;
+    ACTION=4
+    ;;
     "search")
-            ACTION=5
-            ;;
+    ACTION=5
+    ;;
     "purge")
-            ACTION=6
-            ;;
+    ACTION=6
+    ;;
     "lists")
-            ACTION=7
-            ;;
+    ACTION=7
+    ;;
     "deletelist")
-            ACTION=8
-            ;;
+    ACTION=8
+    ;;
     "showlists")
-            ACTION=9
-            ;;
+    ACTION=9
+    ;;
     "searchlists")
-            ACTION=10
-            ;;
+    ACTION=10
+    ;;
     "print"|"-p")
-            ACTION=19
-            ;;
+    ACTION=19
+    ;;
     "printlists")
-            ACTION=20
-            ;;           
+    ACTION=20
+    ;;
     "help"|"-h")
-            print_usage_message
-            ;;
+    print_usage_message
+    ;;
     "version"|"-v")
-            print_version
-            ;;
+    print_version
+    ;;
     *)
-            print_error_message "action not specified correctly"
-            ;;
+    print_error_message "action not specified correctly"
+    ;;
 esac
 
 # Now handle suboptions
@@ -1023,23 +1065,23 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
         case $2 in
             "-n")
-                STYPE=1
-                ;;
+            STYPE=1
+            ;;
             "-i")
-                STYPE=2
-                ;;
+            STYPE=2
+            ;;
             "-c")
-                STYPE=3
-                ;;
+            STYPE=3
+            ;;
             "-f")
-                STYPE=9
-                ;;
+            STYPE=9
+            ;;
             "-h")
-                print_usage_message
-                ;;
+            print_usage_message
+            ;;
             *)
-                print_error_message "incorrect option"
-                ;;
+            print_error_message "incorrect option"
+            ;;
         esac
 
     fi
@@ -1085,72 +1127,72 @@ elif [ $ACTION -eq 4 ]; then
 
         "-s")
 
-            if [ $NARGS -ne 4 ]; then
-                print_error_message "$1 $2 requires <status> <tag>"
-            else
+        if [ $NARGS -ne 4 ]; then
+            print_error_message "$1 $2 requires <status> <tag>"
+        else
 
-                STATUS_SYMB=$3
-                TAG=$4
+            STATUS_SYMB=$3
+            TAG=$4
 
-                case $STATUS_SYMB in
-                    "n"|"N")
-                        STATUS="(N)"
-                        ;;
-                    "i"|"I")
-                        STATUS="(I)"
-                        ;;
-                    "c"|"C")
-                        STATUS="(C)"
-                        ;;
-                    *)
-                        print_error_message "status not specified correctly"
-                        ;;
-                esac
+            case $STATUS_SYMB in
+                "n"|"N")
+                STATUS="(N)"
+                ;;
+                "i"|"I")
+                STATUS="(I)"
+                ;;
+                "c"|"C")
+                STATUS="(C)"
+                ;;
+                *)
+                print_error_message "status not specified correctly"
+                ;;
+            esac
 
 
-            fi
+        fi
 
             # Modify entry
-            modify_entry_status "$STATUS" "$TAG"
-            ;;
+        modify_entry_status "$STATUS" "$TAG"
+        ;;
 
         "-m")
 
-            if [ $NARGS -ne 4 ]; then
-                print_error_message "$1 $2 requires <statement> <tag>"
-            else
+        if [ $NARGS -ne 4 ]; then
+            print_error_message "$1 $2 requires <statement> <tag>"
+        else
 
-                STATEMENT=$3
-                TAG=$4
+            STATEMENT=$3
+            TAG=$4
 
-                modify_entry_statement "$STATEMENT" "$TAG"
+            modify_entry_statement "$STATEMENT" "$TAG"
 
-            fi
-            ;;
+        fi
+        ;;
 
         "-f")
 
-            if [ $NARGS -ne 3 ]; then
-                print_error_message "$1 $2 requires <tag>"
-            else
+        if [ $NARGS -ne 3 ]; then
+            print_error_message "$1 $2 requires <tag>"
+        else
 
-                TAG=$3
-                toggle_important_flag "$TAG"
+            TAG=$3
+            toggle_important_flag "$TAG"
 
-            fi
-            ;;
+        fi
+        ;;
 
         "-r")
-            reorder_entry_tags
-            ;;
+        reorder_entry_tags
+        ;;
 
         "-h")
-            print_usage_message
-            ;;
+        print_usage_message
+        ;;
 
         *)
-            print_error_message "not a valid edit option"
-            ;;
+        print_error_message "not a valid edit option"
+        ;;
 
     esac
 
@@ -1180,7 +1222,7 @@ elif [ $ACTION -eq 10 ]; then
 
     [ $NARGS -ne 2 ] && print_error_message "$1 requires search phrase"
     search_entries_all_lists "$2"
-    
+
 else
 
     print_error_message "action not specified correctly"
