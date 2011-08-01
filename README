@@ -40,6 +40,16 @@ requirements are:
 
 
 =====================================================================
+                             CONTRIBUTORS
+=====================================================================
+
+    * Edo Frederix: provided testing on Mac and Linux; reported issues
+      with colored output on Mac; provided correct BSD style sed
+      command used to fix issues with several gsd functions on Mac and
+      *BSD
+
+
+=====================================================================
                            GETTING STARTED
 =====================================================================
 
