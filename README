@@ -27,10 +27,10 @@ Becasue gsd has a simple interface for managing all of you to-do lists
 you can create lists for home, work, etc. and create lists for each of
 your projects.
 
-Requirements: gsd work fine on any Unix based OS (Linux, *BSD, Mac)
-and on Windows running Cygwin. It requires software found on any
-standard installation of the afore mentioned OS's. Specific
-requirements:
+Requirements: gsd should work fine on any Unix based OS (Linux, *BSD,
+Mac) and on Windows running Cygwin. It requires software found on any
+standard installation of the afore mentioned OS's. Specifically these
+requirements are:
    
    * bash
    * coreutils
