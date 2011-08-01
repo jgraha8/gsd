@@ -23,7 +23,7 @@
 ############################################################################
 
 # Adjust text colors based on terminal background
-DARK_BACKGROUND="no"
+DARK_BACKGROUND="yes"
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
@@ -51,18 +51,27 @@ CYAN="01;36"
 
 # Specify colors for new, incomplete, completed and flagged
 if [[ "$DARK_BACKGROUND" == "yes" ]]; then
-    COLOR_NEW="\e[${BLUE}m"
-    COLOR_INCOMPLETE="\e[${YELLOW}m"
-    COLOR_COMPLETE="\e[${GREEN}m"
+    COLOR_NEW="\033[${BLUE}m"
+    COLOR_INCOMPLETE="\033[${YELLOW}m"
+    COLOR_COMPLETE="\033[${GREEN}m"
 else
-    COLOR_NEW="\e[${BLUE}m"
-    COLOR_INCOMPLETE="\e[${CYAN}m"
-    COLOR_COMPLETE="\e[${MAGENTA}m"
+    COLOR_NEW="\033[${BLUE}m"
+    COLOR_INCOMPLETE="\033[${CYAN}m"
+    COLOR_COMPLETE="\033[${MAGENTA}m"
 fi
-COLOR_FLAG="\e[${RED}m"
-COLOR_LIST="\e[${BLUE}m"
-COLOR_END="\e[0m"
+COLOR_FLAG="\033[${RED}m"
+COLOR_LIST="\033[${BLUE}m"
+COLOR_END="\033[0m"
 
+# OS check
+OSNAME=`uname`
+
+# OS specific work arounds
+if [[ "$OSNAME" == 'Darwin' || "$OSNAME" == 'FreeBSD' ]]; then
+    SED_WRITE_LINE="sed_write_line_bsd"
+else
+    SED_WRITE_LINE="sed_write_line"
+fi
 
 
 #####################################################################
@@ -231,6 +240,44 @@ function lowercase {
 
     _string=$(echo $_string|tr [:upper:] [:lower:])
     echo $_string
+
+    return 0
+
+}
+
+#--------------------------------------------------------------------
+# SED_WRITE_LINE (GNU STYLE)
+#--------------------------------------------------------------------
+# This function is called using the global variable SED_WRITE_LINE
+function sed_write_line {
+
+    local _linenumber="$1"
+    local _line="$2"
+    local _file="$3"
+
+    sed -i.tmp "$_linenumber c$_line" $_file
+
+    [ $? -ne 0 ] && print_error_message "unable to write line"
+
+    return 0
+
+}
+
+#--------------------------------------------------------------------
+# SED_WRITE_LINE_BSD (BSD STYLE)
+#--------------------------------------------------------------------
+# This function is called using the global variable SED_WRITE_LINE
+function sed_write_line_bsd {
+
+    local _linenumber="$1"
+    local _line="$2"
+    local _file="$3"
+
+    sed -i.tmp "$_linenumber c\\
+    $_line\\
+    " $_file
+
+    [ $? -ne 0 ] && print_error_message "unable to write line"
 
     return 0
 
@@ -598,8 +645,8 @@ function modify_entry_status {
     _statement=$(show_entry_statement "$_line")
 
     # Update the entry in the gsd file
-
-    sed -i.tmp "$_linenumber c$_tag:$_status:$_flag:$_statement" $GSDFILE
+    #sed -i.tmp "$_linenumber c$_tag:$_status:$_flag:$_statement" $GSDFILE
+    $SED_WRITE_LINE "$_linenumber" "$_tag:$_status:$_flag:$_statement" "$GSDFILE"
 
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
@@ -640,7 +687,8 @@ function modify_entry_statement {
     _line="$_tag:$_status:$_flag:$_statement"
 
     # Update the entry in the gsd file
-    sed -i.tmp "$_linenumber c$_line" $GSDFILE
+    #sed -i.tmp "$_linenumber c$_line" $GSDFILE
+    $SED_WRITE_LINE "$_linenumber" "$_line" "$GSDFILE"
 
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
@@ -886,7 +934,8 @@ function toggle_important_flag {
     _line="$_tag:$_status:$_flag:$_statement"
 
     # Update the entry in the gsd file
-    sed -i.tmp "$_linenumber c$_line" $GSDFILE
+    #sed -i.tmp "$_linenumber c$_line" $GSDFILE
+    $SED_WRITE_LINE "$_linenumber" "$_line" "$GSDFILE"
 
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
@@ -931,20 +980,20 @@ function delete_list {
 
     case $_list in
         "default")
-_gsdfile="$GSDDEFAULT"
-;;
-*)
-_gsdfile="${GSDDIR}/${_list}.lst"
-;;
-esac
+            _gsdfile="$GSDDEFAULT"
+            ;;
+        *)
+            _gsdfile="${GSDDIR}/${_list}.lst"
+            ;;
+    esac
 
-if [ ! -f "$_gsdfile" ]; then
-    show_error_message "specified list does not exisit"
-else
-    rm $_gsdfile
-fi
+    if [ ! -f "$_gsdfile" ]; then
+        show_error_message "specified list does not exisit"
+    else
+        rm $_gsdfile
+    fi
 
-return 0
+    return 0
 
 }
 
@@ -1079,53 +1128,53 @@ fi
     # First argument should be the action
 case $1 in
     "show")
-    ACTION=1
-    ;;
+            ACTION=1
+            ;;
     "add")
-    ACTION=2
-    ;;
+            ACTION=2
+            ;;
     "delete")
-    ACTION=3
-    ;;
+            ACTION=3
+            ;;
     "edit")
-    ACTION=4
-    ;;
+            ACTION=4
+            ;;
     "search")
-    ACTION=5
-    ;;
+            ACTION=5
+            ;;
     "purge")
-    ACTION=6
-    ;;
+            ACTION=6
+            ;;
     "lists")
-    ACTION=7
-    ;;
+            ACTION=7
+            ;;
     "deletelist")
-    ACTION=8
-    ;;
+            ACTION=8
+            ;;
     "showlists")
-    ACTION=9
-    ;;
+            ACTION=9
+            ;;
     "searchlists")
-    ACTION=10
-    ;;
+            ACTION=10
+            ;;
     "purgelists")
-    ACTION=11
-    ;;
+            ACTION=11
+            ;;
     "print")
-    ACTION=19
-    ;;
+            ACTION=19
+            ;;
     "printlists")
-    ACTION=20
-    ;;
+            ACTION=20
+            ;;
     "help")
-    show_usage_message
-    ;;
+            show_usage_message
+            ;;
     "version"|"-v")
-    show_version
-    ;;
+            show_version
+            ;;
     *)
-    show_error_message "action not specified correctly"
-    ;;
+            show_error_message "action not specified correctly"
+            ;;
 esac
 
 # Now handle suboptions
