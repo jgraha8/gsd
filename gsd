@@ -445,7 +445,7 @@ function show_last_entry_tag {
     rm -f "$_gsdfile_rev" || show_error_message "unable to cleanup: check $GSDDIR permissions"
 
     # Create reversed list
-    cat "${GSDFILE}" | sort -hr >> "$_gsdfile_rev"
+    cat "${GSDFILE}" | sort -nr >> "$_gsdfile_rev"
 
     while read _line; do
 
