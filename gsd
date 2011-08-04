@@ -28,7 +28,7 @@ DARK_BACKGROUND="yes"
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
 GSDDEFAULT="$GSDDIR/default.lst"
-GSDVERSION="cvs"
+GSDVERSION="git"
 
 # Attribute codes:
 # 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
