@@ -606,16 +606,10 @@ function print_entries {
     unset COLOR_LIST
     unset COLOR_END
 
-    # Print contents to temporary file
+    # Send to printer; requires $PRINTER to be set
     show_entries $_stype /dev/stdout | lpr -p
 
-    # Send to printer; requires $PRINTER to be set
-
-#    cat $GSDFILE.tmp >> /dev/stdout | lpr -p
-
     [ $? -ne 0 ] && show_error_message "unable to print"
-
-#    rm -f $GSDFILE.tmp
 
     return 0
 
@@ -1193,23 +1187,23 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
         case $2 in
             "-n")
-            STYPE=1
-            ;;
+                STYPE=1
+                ;;
             "-i")
-            STYPE=2
-            ;;
+                STYPE=2
+                ;;
             "-c")
-            STYPE=3
-            ;;
+                STYPE=3
+                ;;
             "-f")
-            STYPE=9
-            ;;
+                STYPE=9
+                ;;
             "-h")
-            show_usage_message
-            ;;
+                show_usage_message
+                ;;
             *)
-            show_error_message "incorrect option"
-            ;;
+                show_error_message "incorrect option"
+                ;;
         esac
 
     fi
@@ -1255,72 +1249,72 @@ elif [ $ACTION -eq 4 ]; then
 
         "-s")
 
-        if [ $NARGS -ne 4 ]; then
-            show_error_message "$1 $2 requires <status> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                show_error_message "$1 $2 requires <status> <tag>"
+            else
 
-            STATUS_SYMB=$3
-            TAG=$4
+                STATUS_SYMB=$3
+                TAG=$4
 
-            case $STATUS_SYMB in
-                "n"|"N")
-                STATUS="(N)"
-                ;;
-                "i"|"I")
-                STATUS="(I)"
-                ;;
-                "c"|"C")
-                STATUS="(C)"
-                ;;
-                *)
-                show_error_message "status not specified correctly"
-                ;;
-            esac
+                case $STATUS_SYMB in
+                    "n"|"N")
+                        STATUS="(N)"
+                        ;;
+                    "i"|"I")
+                        STATUS="(I)"
+                        ;;
+                    "c"|"C")
+                        STATUS="(C)"
+                        ;;
+                    *)
+                        show_error_message "status not specified correctly"
+                        ;;
+                esac
 
 
-        fi
+            fi
 
             # Modify entry
-        modify_entry_status "$STATUS" "$TAG"
-        ;;
+            modify_entry_status "$STATUS" "$TAG"
+            ;;
 
         "-m")
 
-        if [ $NARGS -ne 4 ]; then
-            show_error_message "$1 $2 requires <statement> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                show_error_message "$1 $2 requires <statement> <tag>"
+            else
 
-            STATEMENT=$3
-            TAG=$4
+                STATEMENT=$3
+                TAG=$4
 
-            modify_entry_statement "$STATEMENT" "$TAG"
+                modify_entry_statement "$STATEMENT" "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-f")
 
-        if [ $NARGS -ne 3 ]; then
-            show_error_message "$1 $2 requires <tag>"
-        else
+            if [ $NARGS -ne 3 ]; then
+                show_error_message "$1 $2 requires <tag>"
+            else
 
-            TAG=$3
-            toggle_important_flag "$TAG"
+                TAG=$3
+                toggle_important_flag "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-r")
-        reorder_entry_tags
-        ;;
+            reorder_entry_tags
+            ;;
 
         "-h")
-        show_usage_message
-        ;;
+            show_usage_message
+            ;;
 
         *)
-        show_error_message "not a valid edit option"
-        ;;
+            show_error_message "not a valid edit option"
+            ;;
 
     esac
 
