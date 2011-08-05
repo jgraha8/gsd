@@ -85,7 +85,7 @@ fi
 function show_usage_message {
     echo "Usage: $SCRIPTNAME [options] command [command-options-and-arguments]"
     echo "Options:"
-    echo "  -l <list>                 Specify with list to use"
+    echo "  -l <list>                 Specify which list to use"
     echo " "
     echo "Commands:"
     echo "  help                      Print this message"
@@ -544,11 +544,10 @@ function show_entries {
     local _flagged
     local _line
     local _list
+    local _entry
 
-    declare -i _printed_one
-    local _printed_one=0
-
-    show_working_list
+    declare -i _one_shown
+    local _one_shown=0
 
     while read _line; do
 
@@ -558,33 +557,42 @@ function show_entries {
         # Ignore blank or commented lines
         if [ $_ltype -ne 0 -a $_ltype -ne 11 ]; then
 
-            _printed_one=1
-
             case $_stype in
                 0)
                     # Print all valid entries
-                    show_entry $_ltype "$_line" >> "$_printloc"
+                    _entry=$(show_entry $_ltype "$_line") #>> "$_printloc"
                     ;;
                 1)
-                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && show_entry $_ltype "$_line" >> "$_printloc"
+                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
                     ;;
                 2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && show_entry $_ltype "$_line" >> "$_printloc"
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
                     ;;
                 3)
-                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && show_entry $_ltype "$_line" >> "$_printloc"
+                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
                     ;;
                 9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && show_entry $_ltype "$_line" >> "$_printloc"
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line")#>> "$_printloc"
                     ;;
             esac
 
         fi
 
+        if [[ ! -z "$_entry" ]]; then
+
+            [ $_one_shown -eq 0 ] && show_working_list
+
+            echo "$_entry" >> "$_printloc"
+            unset _entry
+
+            _one_shown=1
+
+        fi
+
     done < $GSDFILE
 
-    # Print a blank entry
-    [ $_printed_one -eq 1 ] && show_entry_divider >> "$_printloc"
+    # Print entry divider
+    [ $_one_shown -eq 1 ] && show_entry_divider >> "$_printloc"
 
 }
 
@@ -974,20 +982,20 @@ function delete_list {
 
     case $_list in
         "default")
-            _gsdfile="$GSDDEFAULT"
-            ;;
-        *)
-            _gsdfile="${GSDDIR}/${_list}.lst"
-            ;;
-    esac
+_gsdfile="$GSDDEFAULT"
+;;
+*)
+_gsdfile="${GSDDIR}/${_list}.lst"
+;;
+esac
 
-    if [ ! -f "$_gsdfile" ]; then
-        show_error_message "specified list does not exisit"
-    else
-        rm $_gsdfile
-    fi
+if [ ! -f "$_gsdfile" ]; then
+    show_error_message "specified list does not exisit"
+else
+    rm $_gsdfile
+fi
 
-    return 0
+return 0
 
 }
 
@@ -1122,53 +1130,53 @@ fi
     # First argument should be the action
 case $1 in
     "show")
-            ACTION=1
-            ;;
+    ACTION=1
+    ;;
     "add")
-            ACTION=2
-            ;;
+    ACTION=2
+    ;;
     "delete")
-            ACTION=3
-            ;;
+    ACTION=3
+    ;;
     "edit")
-            ACTION=4
-            ;;
+    ACTION=4
+    ;;
     "search")
-            ACTION=5
-            ;;
+    ACTION=5
+    ;;
     "purge")
-            ACTION=6
-            ;;
+    ACTION=6
+    ;;
     "lists")
-            ACTION=7
-            ;;
+    ACTION=7
+    ;;
     "deletelist")
-            ACTION=8
-            ;;
+    ACTION=8
+    ;;
     "showlists")
-            ACTION=9
-            ;;
+    ACTION=9
+    ;;
     "searchlists")
-            ACTION=10
-            ;;
+    ACTION=10
+    ;;
     "purgelists")
-            ACTION=11
-            ;;
+    ACTION=11
+    ;;
     "print")
-            ACTION=19
-            ;;
+    ACTION=19
+    ;;
     "printlists")
-            ACTION=20
-            ;;
+    ACTION=20
+    ;;
     "help")
-            show_usage_message
-            ;;
+    show_usage_message
+    ;;
     "version"|"-v")
-            show_version
-            ;;
+    show_version
+    ;;
     *)
-            show_error_message "action not specified correctly"
-            ;;
+    show_error_message "action not specified correctly"
+    ;;
 esac
 
 # Now handle suboptions
@@ -1187,23 +1195,23 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
         case $2 in
             "-n")
-                STYPE=1
-                ;;
+            STYPE=1
+            ;;
             "-i")
-                STYPE=2
-                ;;
+            STYPE=2
+            ;;
             "-c")
-                STYPE=3
-                ;;
+            STYPE=3
+            ;;
             "-f")
-                STYPE=9
-                ;;
+            STYPE=9
+            ;;
             "-h")
-                show_usage_message
-                ;;
+            show_usage_message
+            ;;
             *)
-                show_error_message "incorrect option"
-                ;;
+            show_error_message "incorrect option"
+            ;;
         esac
 
     fi
@@ -1249,72 +1257,72 @@ elif [ $ACTION -eq 4 ]; then
 
         "-s")
 
-            if [ $NARGS -ne 4 ]; then
-                show_error_message "$1 $2 requires <status> <tag>"
-            else
+        if [ $NARGS -ne 4 ]; then
+            show_error_message "$1 $2 requires <status> <tag>"
+        else
 
-                STATUS_SYMB=$3
-                TAG=$4
+            STATUS_SYMB=$3
+            TAG=$4
 
-                case $STATUS_SYMB in
-                    "n"|"N")
-                        STATUS="(N)"
-                        ;;
-                    "i"|"I")
-                        STATUS="(I)"
-                        ;;
-                    "c"|"C")
-                        STATUS="(C)"
-                        ;;
-                    *)
-                        show_error_message "status not specified correctly"
-                        ;;
-                esac
+            case $STATUS_SYMB in
+                "n"|"N")
+                STATUS="(N)"
+                ;;
+                "i"|"I")
+                STATUS="(I)"
+                ;;
+                "c"|"C")
+                STATUS="(C)"
+                ;;
+                *)
+                show_error_message "status not specified correctly"
+                ;;
+            esac
 
 
-            fi
+        fi
 
             # Modify entry
-            modify_entry_status "$STATUS" "$TAG"
-            ;;
+        modify_entry_status "$STATUS" "$TAG"
+        ;;
 
         "-m")
 
-            if [ $NARGS -ne 4 ]; then
-                show_error_message "$1 $2 requires <statement> <tag>"
-            else
+        if [ $NARGS -ne 4 ]; then
+            show_error_message "$1 $2 requires <statement> <tag>"
+        else
 
-                STATEMENT=$3
-                TAG=$4
+            STATEMENT=$3
+            TAG=$4
 
-                modify_entry_statement "$STATEMENT" "$TAG"
+            modify_entry_statement "$STATEMENT" "$TAG"
 
-            fi
-            ;;
+        fi
+        ;;
 
         "-f")
 
-            if [ $NARGS -ne 3 ]; then
-                show_error_message "$1 $2 requires <tag>"
-            else
+        if [ $NARGS -ne 3 ]; then
+            show_error_message "$1 $2 requires <tag>"
+        else
 
-                TAG=$3
-                toggle_important_flag "$TAG"
+            TAG=$3
+            toggle_important_flag "$TAG"
 
-            fi
-            ;;
+        fi
+        ;;
 
         "-r")
-            reorder_entry_tags
-            ;;
+        reorder_entry_tags
+        ;;
 
         "-h")
-            show_usage_message
-            ;;
+        show_usage_message
+        ;;
 
         *)
-            show_error_message "not a valid edit option"
-            ;;
+        show_error_message "not a valid edit option"
+        ;;
 
     esac
 
