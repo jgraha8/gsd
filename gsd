@@ -23,7 +23,7 @@
 ############################################################################
 
 # Adjust text colors based on terminal background
-DARK_BACKGROUND="yes"
+DARK_BACKGROUND="no"
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
@@ -770,7 +770,7 @@ function search_entries {
     declare -i _found_one
     local _found_one=0
 
-    show_working_list
+
 
     for _n in `grep -i -n "$_phrase" $GSDFILE | cut -f1 -d:`
     do
@@ -790,8 +790,10 @@ function search_entries {
 
             if [[ "$_statement" == *"$_phrase"* ]]; then
 
-                _found_one=1
+                [ $_found_one -eq 0 ] && show_working_list
                 show_entry $_ltype "$_line" >> /dev/stdout
+
+                _found_one=1
 
             fi
 
@@ -982,20 +984,20 @@ function delete_list {
 
     case $_list in
         "default")
-_gsdfile="$GSDDEFAULT"
-;;
-*)
-_gsdfile="${GSDDIR}/${_list}.lst"
-;;
-esac
+            _gsdfile="$GSDDEFAULT"
+            ;;
+        *)
+            _gsdfile="${GSDDIR}/${_list}.lst"
+            ;;
+    esac
 
-if [ ! -f "$_gsdfile" ]; then
-    show_error_message "specified list does not exisit"
-else
-    rm $_gsdfile
-fi
+    if [ ! -f "$_gsdfile" ]; then
+        show_error_message "specified list does not exisit"
+    else
+        rm $_gsdfile
+    fi
 
-return 0
+    return 0
 
 }
 
@@ -1035,7 +1037,7 @@ function show_entries_all_lists {
     for _list in `show_available_lists`
     do
         GSDFILE="${GSDDIR}/${_list}.lst"
-        show_entries $1 "$_printloc"
+        show_entries $_stype "$_printloc"
 
     done
 
@@ -1080,7 +1082,7 @@ function print_entries_all_lists {
     unset COLOR_LIST
     unset COLOR_END
 
-    show_entries_all_lists $1 /dev/stdout | lpr -p
+    show_entries_all_lists $_stype /dev/stdout | lpr -p
 
     [ $? -ne 0 ] && show_error_message "unable to print lists"
 
@@ -1130,53 +1132,53 @@ fi
     # First argument should be the action
 case $1 in
     "show")
-    ACTION=1
-    ;;
+            ACTION=1
+            ;;
     "add")
-    ACTION=2
-    ;;
+            ACTION=2
+            ;;
     "delete")
-    ACTION=3
-    ;;
+            ACTION=3
+            ;;
     "edit")
-    ACTION=4
-    ;;
+            ACTION=4
+            ;;
     "search")
-    ACTION=5
-    ;;
+            ACTION=5
+            ;;
     "purge")
-    ACTION=6
-    ;;
+            ACTION=6
+            ;;
     "lists")
-    ACTION=7
-    ;;
+            ACTION=7
+            ;;
     "deletelist")
-    ACTION=8
-    ;;
+            ACTION=8
+            ;;
     "showlists")
-    ACTION=9
-    ;;
+            ACTION=9
+            ;;
     "searchlists")
-    ACTION=10
-    ;;
+            ACTION=10
+            ;;
     "purgelists")
-    ACTION=11
-    ;;
+            ACTION=11
+            ;;
     "print")
-    ACTION=19
-    ;;
+            ACTION=19
+            ;;
     "printlists")
-    ACTION=20
-    ;;
+            ACTION=20
+            ;;
     "help")
-    show_usage_message
-    ;;
+            show_usage_message
+            ;;
     "version"|"-v")
-    show_version
-    ;;
+            show_version
+            ;;
     *)
-    show_error_message "action not specified correctly"
-    ;;
+            show_error_message "action not specified correctly"
+            ;;
 esac
 
 # Now handle suboptions
@@ -1195,14 +1197,14 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
         case $2 in
             "-n")
-            STYPE=1
-            ;;
+                STYPE=1
+                ;;
             "-i")
-            STYPE=2
-            ;;
+                STYPE=2
+                ;;
             "-c")
-            STYPE=3
-            ;;
+                STYPE=3
+                ;;
             "-f")
             STYPE=9
             ;;
