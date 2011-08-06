@@ -140,7 +140,7 @@ function show_usage_message {
 function show_info_message {
     echo "Usage: $SCRIPTNAME [options] <command> [args]"
     echo ""
-    echo "The most commenly used $SCRIPTNAME commands are:"
+    echo "The most commonly used $SCRIPTNAME commands are:"
     echo "  help                      Print extended help message"
     echo "  info                      Print this message"
     echo "  show                      Show entries in list"
