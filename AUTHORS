@@ -1,28 +1,20 @@
-Copyright (C) 2011 Jason Graham <jgraha8@gmail.com> 
-See the end of the file for license conditions.
+Copyright (C) 2011 Jason Graham <jgraha8@gmail.com>
 
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
 
-This file contains authors/contributors to gsd
+This file contains authors to gsd and their contributions. For all
+other contributions please see THANKS.
 
-  * Jason Graham: developed the main program; current maintaner
+Jason Graham <jgraha8@gmail.com>
 
-  * Edo Frederix: provided testing on Mac and Linux; reported issues
-    with colored output on Mac; provided correct BSD style sed command
-    used to fix issues on Mac and *BSD; added info usage statement
+    * developed the main program
+    * current maintaner
 
+Edo Frederix <edofrederix@gmail.com> 
 
-This file is part of gsd
-
-gsd is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation, either version 3 of the License, or (at your
-option) any later version.
-
-gsd is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
-
-You should have received a copy of the GNU General Public License
-along with gsd.  If not, see <http://www.gnu.org/licenses/>.
-
+    * provided testing on Mac and Linux; reported issues with colored
+      output on Mac; provided correct BSD style sed command used to
+      fix issues on Mac and *BSD 
+    * Added info usage statement; updated default gsd behavior
