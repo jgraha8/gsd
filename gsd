@@ -23,7 +23,7 @@
 ############################################################################
 
 # Adjust text colors based on terminal background
-DARK_BACKGROUND="no"
+DARK_BACKGROUND="yes"
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
@@ -83,12 +83,14 @@ fi
 #---------------------------------------------------------------------
 
 function show_usage_message {
-    echo "Usage: $SCRIPTNAME [options] command [command-options-and-arguments]"
+    echo "Usage: $SCRIPTNAME [options] <command> [args]"
+    echo ""
     echo "Options:"
     echo "  -l <list>                 Specify which list to use"
     echo " "
     echo "Commands:"
     echo "  help                      Print this message"
+    echo "  info                      Show basic usage"
     echo "  show                      Show entries in list"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
@@ -112,7 +114,7 @@ function show_usage_message {
     echo "      -c                    Print only entries with status complete"
     echo "      -f                    Print only flagged entries"
     echo "  lists                     Show which lists are available"
-    echo "  deletelist <list>         Delete specified list"
+    echo "  deletelist <list>         Delete list"
     echo "  showlists                 Show entries in all lists"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
@@ -136,7 +138,7 @@ function show_usage_message {
 #---------------------------------------------------------------------
 
 function show_info_message {
-    echo "Usage: $SCRIPTNAME [-l <list>] <command> [<args>]"
+    echo "Usage: $SCRIPTNAME [options] <command> [args]"
     echo ""
     echo "The most commenly used $SCRIPTNAME commands are:"
     echo "  help                      Print extended help message"
