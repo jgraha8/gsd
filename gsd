@@ -132,6 +132,35 @@ function show_usage_message {
 }
 
 #---------------------------------------------------------------------
+# SHOW_INFO_MESSAGE
+#---------------------------------------------------------------------
+
+function show_info_message {
+    echo "Usage: $SCRIPTNAME [-l <list>] <command>"
+    echo ""
+    echo "The most commenly used $SCRIPTNAME commands are:"
+    echo "  help                      Print extended help message"
+    echo "  info                      Print this message"
+    echo "  show                      Show entries in list"
+    echo "  add                       Add new entry"
+    echo "  delete                    Delete entry"
+    echo "  edit                      Edit entry in list"
+    echo "  search                    Perform text search on entries"
+    echo "  purge                     Remove all completed entries"
+    echo "  print                     Send list entries to printer"
+    echo "  lists                     Show which lists are available"
+    echo "  deletelist                Delete list"
+    echo "  showlists                 Show entries in all lists"
+    echo "  searchlists               Search phrase in all lists"
+    echo "  purgelists                Remove all completed entries in all lists"
+    echo "  printlists                Send entries in all lists to printer "
+    echo "  version                   Show version information"
+    echo ""
+    echo "See '$SCRIPTNAME help' for more information."
+    exit 0
+}
+
+#---------------------------------------------------------------------
 # SHOW_VERSION
 #---------------------------------------------------------------------
 
@@ -1125,12 +1154,15 @@ declare -i ETYPE=0
 declare -i ACTION=0
 
 NARGS=$#
-if [ $NARGS -lt 1 ]; then
-    show_error_message "action not specified"
+if [ $NARGS -ge 1 ]; then
+    ARG="$1"
+else
+    # Show info message if no command is specified
+    ARG="info"
 fi
 
-    # First argument should be the action
-case $1 in
+# First argument should be the action
+case $ARG in
     "show")
             ACTION=1
             ;;
@@ -1173,6 +1205,9 @@ case $1 in
     "help")
             show_usage_message
             ;;
+    "info")
+            show_info_message
+            ;;            
     "version"|"-v")
             show_version
             ;;
