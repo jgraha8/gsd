@@ -1233,7 +1233,7 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
     if [ $NARGS -gt 1 ]; then
 
         if [ $NARGS -gt 2 ]; then
-            show_error_message "$1 only requires only one option"
+            show_error_message "$1 only requires one option"
         fi
 
         case $2 in
