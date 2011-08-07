@@ -609,14 +609,16 @@ function show_entries {
 
         fi
 
+        # Check if entry is empty (it may be depending on _ltype)
         if [[ ! -z "$_entry" ]]; then
 
-            [ $_one_shown -eq 0 ] && show_working_list
+            if [ $_one_shown -eq 0 ]; then
+                _one_shown=1
+                show_working_list
+            fi
 
             echo "$_entry" >> "$_printloc"
             unset _entry
-
-            _one_shown=1
 
         fi
 
