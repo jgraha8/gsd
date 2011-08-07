@@ -229,9 +229,12 @@ function show_entry {
     local _flag=$(show_entry_flag "$_line")
     local _statement=$(show_entry_statement "$_line")
 
+    # Pad the entry tag
+    _tag=$(printf '%3i' "$_tag")
+
     show_entry_divider
     # Indent one space
-    echo -n " "
+    #echo -n " "
 
     check_important_flag "$_line"
     if [ $? -eq 1 ]; then
