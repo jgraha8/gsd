@@ -574,7 +574,6 @@ function show_last_entry_tag {
 function show_entries {
 
     local _stype=$1
-    local _printloc="$2"
     local _ltype
     local _flagged
     local _line
@@ -621,7 +620,7 @@ function show_entries {
                 show_working_list
             fi
 
-            echo "$_entry" >> "$_printloc"
+            echo "$_entry"
             unset _entry
 
         fi
@@ -629,7 +628,7 @@ function show_entries {
     done < $GSDFILE
 
     # Print entry divider
-    [ $_one_shown -eq 1 ] && show_entry_divider >> "$_printloc"
+    [ $_one_shown -eq 1 ] && show_entry_divider
 
 }
 
@@ -652,7 +651,7 @@ function print_entries {
     unset COLOR_END
 
     # Send to printer; requires $PRINTER to be set
-    show_entries $_stype /dev/stdout | lpr -p
+    show_entries $_stype | lpr -p
 
     [ $? -ne 0 ] && show_error_message "unable to print"
 
@@ -828,7 +827,7 @@ function search_entries {
             if [[ "$_statement" == *"$_phrase"* ]]; then
 
                 [ $_found_one -eq 0 ] && show_working_list
-                show_entry $_ltype "$_line" >> /dev/stdout
+                show_entry $_ltype "$_line"
 
                 _found_one=1
 
@@ -1067,14 +1066,13 @@ function search_entries_all_lists {
 function show_entries_all_lists {
 
     local _stype=$1
-    local _printloc="$2"
     local _list
 
     # Get all available lists
     for _list in `show_available_lists`
     do
         GSDFILE="${GSDDIR}/${_list}.lst"
-        show_entries $_stype "$_printloc"
+        show_entries $_stype
 
     done
 
@@ -1119,7 +1117,7 @@ function print_entries_all_lists {
     unset COLOR_LIST
     unset COLOR_END
 
-    show_entries_all_lists $_stype /dev/stdout | lpr -p
+    show_entries_all_lists $_stype | lpr -p
 
     [ $? -ne 0 ] && show_error_message "unable to print lists"
 
@@ -1263,11 +1261,11 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
     if [ $ACTION -eq 1 ]; then
 
-        echo "$(show_entries $STYPE /dev/stdout)"
+        echo "$(show_entries ${STYPE})"
 
     elif [ $ACTION -eq 9 ]; then
 
-        echo "$(show_entries_all_lists $STYPE /dev/stdout)"
+        echo "$(show_entries_all_lists ${STYPE})"
 
     elif [ $ACTION -eq 19 ]; then
 
