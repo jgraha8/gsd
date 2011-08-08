@@ -567,7 +567,7 @@ function show_last_entry_tag {
 # encountered
 #
 
-#-------------------------------------------------------------------
+#--------------------------------------------------------------------
 # SHOW_ENTRIES
 #--------------------------------------------------------------------
 
@@ -630,6 +630,59 @@ function show_entries {
 
     # Print entry divider
     [ $_one_shown -eq 1 ] && show_entry_divider >> "$_printloc"
+
+}
+
+#--------------------------------------------------------------------
+# ALIGN_OUTPUT
+#--------------------------------------------------------------------
+
+function align_output {
+
+    local _output=$1
+    local _width
+    
+    # Find largest number
+    _width=$(get_max_tag_width "$_output")
+    
+    # Extract first number and print nicely formatted
+    echo "$_output" | while read _line; do
+        if [[ "$_line" =~ ^([0-9]+)(.*)$ ]]; then
+            _num=${BASH_REMATCH[1]}
+            _text=${BASH_REMATCH[2]}
+            
+            # Add extra space in front of line
+            echo " $(printf '%2i' $_num) $_text"
+        else
+            echo "$_line"
+        fi
+    done
+    
+}
+
+#--------------------------------------------------------------------
+# GET_MAX_TAG_WIDTH
+#--------------------------------------------------------------------
+
+function get_max_tag_width {
+    
+    local _input="$1"
+    
+    echo "$_input" | {
+        
+        local _numsize=0
+        
+        while read _line; do
+            if [[ "$_line" =~ ^([0-9]+) ]]; then
+                _match=${#BASH_REMATCH[1]}
+                if [ $_match -gt $_numsize ]; then              
+                    _numsize=$_match
+                fi
+            fi
+        done
+        
+        echo "$_numsize"
+    }
 
 }
 
@@ -1263,11 +1316,11 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
     if [ $ACTION -eq 1 ]; then
 
-        show_entries $STYPE /dev/stdout
+        align_output "$(show_entries $STYPE /dev/stdout)"
 
     elif [ $ACTION -eq 9 ]; then
 
-        show_entries_all_lists $STYPE /dev/stdout
+        align_output "$(show_entries_all_lists $STYPE /dev/stdout)"
 
     elif [ $ACTION -eq 19 ]; then
 
