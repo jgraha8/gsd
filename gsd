@@ -601,13 +601,13 @@ function show_entries {
                     [ $_ltype -eq 1 -o $_ltype -eq 19 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
                 2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && _entry=$(show_entry $_ltype "$_line") 
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
                 3)
                     [ $_ltype -eq 3 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
                 9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line") 
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
             esac
 
@@ -1172,56 +1172,56 @@ fi
 # First argument should be the action
 case $ARG in
     "show")
-            ACTION=1
-            ;;
+        ACTION=1
+        ;;
     "add")
-            ACTION=2
-            ;;
+        ACTION=2
+        ;;
     "delete")
-            ACTION=3
-            ;;
+        ACTION=3
+        ;;
     "edit")
-            ACTION=4
-            ;;
+        ACTION=4
+        ;;
     "search")
-            ACTION=5
-            ;;
+        ACTION=5
+        ;;
     "purge")
-            ACTION=6
-            ;;
+        ACTION=6
+        ;;
     "lists")
-            ACTION=7
-            ;;
+        ACTION=7
+        ;;
     "deletelist")
-            ACTION=8
-            ;;
+        ACTION=8
+        ;;
     "showlists")
-            ACTION=9
-            ;;
+        ACTION=9
+        ;;
     "searchlists")
-            ACTION=10
-            ;;
+        ACTION=10
+        ;;
     "purgelists")
-            ACTION=11
-            ;;
+        ACTION=11
+        ;;
     "print")
-            ACTION=19
-            ;;
+        ACTION=19
+        ;;
     "printlists")
-            ACTION=20
-            ;;
+        ACTION=20
+        ;;
     "help")
-            show_usage_message
-            ;;
+        show_usage_message
+        ;;
     "info")
-            show_info_message
-            ;;            
+        show_info_message
+        ;;
     "version"|"-v")
-            show_version
-            ;;
+        show_version
+        ;;
     *)
-            show_error_message "action not specified correctly"
-            ;;
+        show_error_message "action not specified correctly"
+        ;;
 esac
 
 # Now handle suboptions
@@ -1249,14 +1249,14 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
                 STYPE=3
                 ;;
             "-f")
-            STYPE=9
-            ;;
+                STYPE=9
+                ;;
             "-h")
-            show_usage_message
-            ;;
+                show_usage_message
+                ;;
             *)
-            show_error_message "incorrect option"
-            ;;
+                show_error_message "incorrect option"
+                ;;
         esac
 
     fi
@@ -1302,72 +1302,72 @@ elif [ $ACTION -eq 4 ]; then
 
         "-s")
 
-        if [ $NARGS -ne 4 ]; then
-            show_error_message "$1 $2 requires <status> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                show_error_message "$1 $2 requires <status> <tag>"
+            else
 
-            STATUS_SYMB=$3
-            TAG=$4
+                STATUS_SYMB=$3
+                TAG=$4
 
-            case $STATUS_SYMB in
-                "n"|"N")
-                STATUS="(N)"
-                ;;
-                "i"|"I")
-                STATUS="(I)"
-                ;;
-                "c"|"C")
-                STATUS="(C)"
-                ;;
-                *)
-                show_error_message "status not specified correctly"
-                ;;
-            esac
+                case $STATUS_SYMB in
+                    "n"|"N")
+                        STATUS="(N)"
+                        ;;
+                    "i"|"I")
+                        STATUS="(I)"
+                        ;;
+                    "c"|"C")
+                        STATUS="(C)"
+                        ;;
+                    *)
+                        show_error_message "status not specified correctly"
+                        ;;
+                esac
 
 
-        fi
+            fi
 
             # Modify entry
-        modify_entry_status "$STATUS" "$TAG"
-        ;;
+            modify_entry_status "$STATUS" "$TAG"
+            ;;
 
         "-m")
 
-        if [ $NARGS -ne 4 ]; then
-            show_error_message "$1 $2 requires <statement> <tag>"
-        else
+            if [ $NARGS -ne 4 ]; then
+                show_error_message "$1 $2 requires <statement> <tag>"
+            else
 
-            STATEMENT=$3
-            TAG=$4
+                STATEMENT=$3
+                TAG=$4
 
-            modify_entry_statement "$STATEMENT" "$TAG"
+                modify_entry_statement "$STATEMENT" "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-f")
 
-        if [ $NARGS -ne 3 ]; then
-            show_error_message "$1 $2 requires <tag>"
-        else
+            if [ $NARGS -ne 3 ]; then
+                show_error_message "$1 $2 requires <tag>"
+            else
 
-            TAG=$3
-            toggle_important_flag "$TAG"
+                TAG=$3
+                toggle_important_flag "$TAG"
 
-        fi
-        ;;
+            fi
+            ;;
 
         "-r")
-        reorder_entry_tags
-        ;;
+            reorder_entry_tags
+            ;;
 
         "-h")
-        show_usage_message
-        ;;
+            show_usage_message
+            ;;
 
         *)
-        show_error_message "not a valid edit option"
-        ;;
+            show_error_message "not a valid edit option"
+            ;;
 
     esac
 
