@@ -1138,21 +1138,11 @@ fi
 
 # Now see if a list was specified
 if [[ $1 == "-l" ]]; then
-
     GSDFILE="$GSDDIR/$2.lst"
     # Shift 2 places in the argument list
     shift 2
-
 else
-
     GSDFILE="$GSDDEFAULT"
-
-fi
-
-# Now check if list exist; if not create it
-if [ ! -f $GSDFILE ]; then
-    touch "$GSDFILE"
-    [ $? -ne 0 ] && show_error_message "unable to create $GSDFILE"
 fi
 
 declare -i STYPE=0
@@ -1221,6 +1211,12 @@ case $ARG in
         show_error_message "action not specified correctly"
         ;;
 esac
+
+# Now check if list exist; if not create it
+if [ ! -f $GSDFILE ]; then
+    touch "$GSDFILE"
+    [ $? -ne 0 ] && show_error_message "unable to create $GSDFILE"
+fi
 
 # Now handle suboptions
 if [ $ACTION -eq 0 ]; then
