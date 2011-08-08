@@ -1261,11 +1261,13 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
 
     if [ $ACTION -eq 1 ]; then
 
-        echo "$(show_entries ${STYPE})"
+        ENTRIES="$(show_entries ${STYPE})"
+        [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
     elif [ $ACTION -eq 9 ]; then
 
-        echo "$(show_entries_all_lists ${STYPE})"
+        ENTRIES="$(show_entries_all_lists ${STYPE})"
+        [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
     elif [ $ACTION -eq 19 ]; then
 
@@ -1372,7 +1374,9 @@ elif [ $ACTION -eq 4 ]; then
 elif [ $ACTION -eq 5 ]; then
 
     [ $NARGS -ne 2 ] && show_error_message "$1 requires search phrase"
-    echo "$(search_entries "$2")"
+
+    ENTRIES="$(search_entries "$2")"
+    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
 elif [ $ACTION -eq 6 ]; then
 
@@ -1383,7 +1387,9 @@ elif [ $ACTION -eq 6 ]; then
 elif [ $ACTION -eq 7 ]; then
         # Show available lists
     [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
-    echo "$(show_available_lists)"
+
+    ENTRIES="$(show_available_lists)"
+    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
 elif [ $ACTION -eq 8 ]; then
         # Delete specified list
@@ -1394,7 +1400,9 @@ elif [ $ACTION -eq 8 ]; then
 elif [ $ACTION -eq 10 ]; then
 
     [ $NARGS -ne 2 ] && show_error_message "$1 requires search phrase"
-    echo "$(search_entries_all_lists "$2")"
+
+    ENTRIES="$(search_entries_all_lists "$2")"
+    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
 elif [ $ACTION -eq 11 ]; then
 
