@@ -595,19 +595,19 @@ function show_entries {
             case $_stype in
                 0)
                     # Print all valid entries
-                    _entry=$(show_entry $_ltype "$_line") #>> "$_printloc"
+                    _entry=$(show_entry $_ltype "$_line")
                     ;;
                 1)
-                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
+                    [ $_ltype -eq 1 -o $_ltype -eq 19 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
                 2)
-                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
+                    [ $_ltype -eq 2 -o $_ltype -eq 29 ] && _entry=$(show_entry $_ltype "$_line") 
                     ;;
                 3)
-                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line") # >> "$_printloc"
+                    [ $_ltype -eq 3 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line")
                     ;;
                 9)
-                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line")#>> "$_printloc"
+                    [ $_ltype -eq 19 -o $_ltype -eq 29 -o $_ltype -eq 39 ] && _entry=$(show_entry $_ltype "$_line") 
                     ;;
             esac
 
