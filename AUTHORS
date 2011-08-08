@@ -17,4 +17,5 @@ Edo Frederix <edofrederix@gmail.com>
     * provided testing on Mac and Linux; reported issues with colored
       output on Mac; provided correct BSD style sed command used to
       fix issues on Mac and *BSD 
-    * Added info usage statement; updated default gsd behavior
+    * added info usage statement; updated default gsd behavior
+    * worked on formatting output
