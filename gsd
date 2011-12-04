@@ -753,6 +753,7 @@ function add_entry {
     echo "$_tag:(N):<NULL>:$_statement" >> $GSDFILE
 
     if [ $? -eq 0 ]; then
+	echo "Added new entry at tag $_tag"
         return 0
     else
         show_error_message "unable to add new entry"
