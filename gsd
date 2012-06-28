@@ -101,11 +101,11 @@ function show_usage_message {
     echo "      -f                    Show only flagged entries"
     echo "  add <statement>           Add new entry"
     echo "  delete <tag>              Delete entry"
+    echo "  status {N|I|C} <tag>      Change status of entry"
+    echo "  flag <tag>                Toggle important flag"
     echo "  edit                      Edit entry in list"
     echo "    Options:"
-    echo "      -s {N|I|C} <tag>      Change status of entry"
     echo "      -m <statement>        Change entry statement"
-    echo "      -f <tag>              Toggle important flag"
     echo "      -r                    Reorder entry tags"
     echo "  search <phrase>           Perform text search on entries"
     echo "  purge                     Remove all completed entries"
@@ -148,6 +148,8 @@ function show_info_message {
     echo "  show                      Show entries in list"
     echo "  add                       Add new entry"
     echo "  delete                    Delete entry"
+    echo "  status                    Change status of entry"
+    echo "  flag                      Toggle important flag"
     echo "  edit                      Edit entry in list"
     echo "  search                    Perform text search on entries"
     echo "  purge                     Remove all completed entries"
@@ -1169,29 +1171,35 @@ case $ARG in
     "delete")
         ACTION=3
         ;;
+    "status")
+	ACTION=4
+	;;
+    "flag")
+	ACTION=5
+	;;
     "edit")
-        ACTION=4
-        ;;
-    "search")
-        ACTION=5
-        ;;
-    "purge")
         ACTION=6
         ;;
-    "lists")
+    "search")
         ACTION=7
         ;;
-    "deletelist")
+    "purge")
         ACTION=8
         ;;
-    "showlists")
+    "lists")
         ACTION=9
         ;;
-    "searchlists")
+    "deletelist")
         ACTION=10
         ;;
-    "purgelists")
+    "showlists")
         ACTION=11
+        ;;
+    "searchlists")
+        ACTION=12
+        ;;
+    "purgelists")
+        ACTION=13
         ;;
     "print")
         ACTION=19
@@ -1224,7 +1232,7 @@ if [ $ACTION -eq 0 ]; then
 
     show_error_message "no action specified"
 
-elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; then
+elif [ $ACTION -eq 1 -o $ACTION -eq 11 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; then
 
     # Showing or printing
     if [ $NARGS -gt 1 ]; then
@@ -1261,7 +1269,7 @@ elif [ $ACTION -eq 1 -o $ACTION -eq 9 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; the
         ENTRIES="$(show_entries ${STYPE})"
         [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
-    elif [ $ACTION -eq 9 ]; then
+    elif [ $ACTION -eq 11 ]; then
 
         ENTRIES="$(show_entries_all_lists ${STYPE})"
         [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
@@ -1289,70 +1297,55 @@ elif [ $ACTION -eq 3 ]; then
 
 elif [ $ACTION -eq 4 ]; then
 
+    (( $NARGS != 3 )) && show_error_message "$1 requires <status> <tag>"
+
+    STATUS_SYMB=$2
+    TAG=$3
+
+    case $STATUS_SYMB in
+        "n"|"N")
+            STATUS="(N)"
+            ;;
+        "i"|"I")
+            STATUS="(I)"
+            ;;
+        "c"|"C")
+            STATUS="(C)"
+            ;;
+        *)
+            show_error_message "status not specified correctly"
+            ;;
+    esac
+
+    # Modify entry
+    modify_entry_status "$STATUS" "$TAG"
+
+elif (( $ACTION == 5 )); then
+
+    (( $NARGS != 2 )) && show_error_message "$1 requires <tag>"
+    
+    TAG=$2
+    toggle_important_flag "$TAG"
+
+elif [ $ACTION -eq 6 ]; then
+
     # Edit entry
 
-    if [ $NARGS == 1 ]; then
-        show_error_message "$1 requires at least option"
-    fi
+    (( $NARGS == 1 )) && show_error_message "$1 requires at least option"
 
     case $2 in
 
-        "-s")
-
-            if [ $NARGS -ne 4 ]; then
-                show_error_message "$1 $2 requires <status> <tag>"
-            else
-
-                STATUS_SYMB=$3
-                TAG=$4
-
-                case $STATUS_SYMB in
-                    "n"|"N")
-                        STATUS="(N)"
-                        ;;
-                    "i"|"I")
-                        STATUS="(I)"
-                        ;;
-                    "c"|"C")
-                        STATUS="(C)"
-                        ;;
-                    *)
-                        show_error_message "status not specified correctly"
-                        ;;
-                esac
-
-
-            fi
-
-            # Modify entry
-            modify_entry_status "$STATUS" "$TAG"
-            ;;
-
         "-m")
 
-            if [ $NARGS -ne 4 ]; then
-                show_error_message "$1 $2 requires <statement> <tag>"
-            else
+            (( $NARGS != 4 )) && show_error_message "$1 $2 requires <statement> <tag>"
 
-                STATEMENT=$3
-                TAG=$4
+            STATEMENT=$3
+            TAG=$4
 
-                modify_entry_statement "$STATEMENT" "$TAG"
+            modify_entry_statement "$STATEMENT" "$TAG"
 
-            fi
-            ;;
+	    ;;
 
-        "-f")
-
-            if [ $NARGS -ne 3 ]; then
-                show_error_message "$1 $2 requires <tag>"
-            else
-
-                TAG=$3
-                toggle_important_flag "$TAG"
-
-            fi
-            ;;
 
         "-r")
             reorder_entry_tags
@@ -1368,40 +1361,40 @@ elif [ $ACTION -eq 4 ]; then
 
     esac
 
-elif [ $ACTION -eq 5 ]; then
+elif (( $ACTION == 7 )); then
 
-    [ $NARGS -ne 2 ] && show_error_message "$1 requires search phrase"
+    (( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
 
     ENTRIES="$(search_entries "$2")"
     [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
-elif [ $ACTION -eq 6 ]; then
+elif [ $ACTION -eq 8 ]; then
 
     [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
     # Purge all entries with status complete
     purge_completed_entries
 
-elif [ $ACTION -eq 7 ]; then
+elif [ $ACTION -eq 9 ]; then
         # Show available lists
     [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
 
     ENTRIES="$(show_available_lists)"
     [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
-elif [ $ACTION -eq 8 ]; then
+elif [ $ACTION -eq 10 ]; then
         # Delete specified list
     [ $NARGS -ne 2 ] && show_error_message "$1 requires <list>"
     delete_list "$2"
 
 
-elif [ $ACTION -eq 10 ]; then
+elif [ $ACTION -eq 12 ]; then
 
     [ $NARGS -ne 2 ] && show_error_message "$1 requires search phrase"
 
     ENTRIES="$(search_entries_all_lists "$2")"
     [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 
-elif [ $ACTION -eq 11 ]; then
+elif [ $ACTION -eq 13 ]; then
 
     [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
     # Purge all entries with status complete
