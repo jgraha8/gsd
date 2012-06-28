@@ -946,6 +946,24 @@ function reorder_entry_tags {
 function toggle_important_flag {
 
     local _tag="$1"
+    (( $# == 2 )) && local _state="$2" # State which only to toggle ("on" or "off")
+
+    local _state_crit # Change criterion
+
+    _state_crit=0
+    if [ ! -z $_state ]; then
+	case $_state in
+	    "off") 
+		_state_crit=11 # Must have current state on
+		;;
+	    "on")
+		_state_crit=10 # Must have current state off
+		;;
+	    *)
+		show_error_message "toogle state not specified correctly"
+		;;
+	esac
+    fi
 
     local _status
     local _flag
@@ -966,11 +984,14 @@ function toggle_important_flag {
     # First see if the statement is marked as important
     check_important_flag "$_line"
 
-    if [ $? -eq 1 ]; then
+    if (( $? == 1 && ( $_state_crit == 0 || $_state_crit == 11 ) )); then
         _flag="<NULL>"
-    else
+    elif (( $_state_crit == 0 || $_state_crit == 10 )); then
         _flag="(*)"
         # Add important tag
+    else
+	# Not changing the entry
+	return 0 
     fi
 
     # Reconstruct the line
@@ -1319,6 +1340,9 @@ elif [ $ACTION -eq 4 ]; then
 
     # Modify entry
     modify_entry_status "$STATUS" "$TAG"
+
+    # Toggle completed items off
+    [[ $STATUS == "(C)" ]] && toggle_important_flag "$TAG" "off"
 
 elif (( $ACTION == 5 )); then
 
