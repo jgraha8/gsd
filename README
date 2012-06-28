@@ -1,4 +1,4 @@
-Copyright (C) 2011 Jason Graham <jgraha8@gmail.com> 
+Copyright (C) 2011, 2012 Jason Graham <jgraha8@gmail.com> 
 See the end of the file for license conditions.
 
 =====================================================================
@@ -102,7 +102,7 @@ if toggled on.
 Since you are on the way to learning gsd, go ahead and change the
 status of the first item with:
 
-    gsd edit -s I 1
+    gsd status I 1
 
 Showing the entries again shows that the status was updated to "(I)"
 for "in progress/incomplete". To look at only the new items run:
@@ -117,7 +117,7 @@ In some instances it is useful to flag some items to be important so
 they recieve the immediate attention. An important flag "(*)" may be
 toggled by using
 
-    gsd edit -f <tag>
+    gsd flag <tag>
 
 Doing this for item 2 in list we get:
 
@@ -146,7 +146,7 @@ print say only the flagged items run:
 
 Once you are done with an item either mark it as complete with:
 
-    gsd edit -s C <tag>
+    gsd status C <tag>
 
 or delete the item using:
 
