@@ -1309,7 +1309,7 @@ case $ACTION in
     "edit")
      
         # Edit entry
-	(( $NARGS == 1 )) && show_error_message "$1 requires at least option"
+	(( $NARGS == 1 )) && show_error_message "$1 requires at least one option"
 
 	case $2 in
 
