@@ -3,7 +3,7 @@
 #
 #  GSD (gsd) is a utility to show, modify, and manage to-do lists.
 #
-#  Copyright (C) 2011  Jason Graham <jgraha8@gmail.com>
+#  Copyright (C) 2011, 2012  Jason Graham <jgraha8@gmail.com>
 #
 #  This file is part of gsd
 #
@@ -809,8 +809,6 @@ function search_entries {
     declare -i _found_one
     local _found_one=0
 
-
-
     for _n in `grep -i -n "$_phrase" $GSDFILE | cut -f1 -d:`
     do
 
@@ -1171,264 +1169,225 @@ fi
 
 declare -i STYPE=0
 declare -i ETYPE=0
-declare -i ACTION=0
 
 NARGS=$#
-if [ $NARGS -ge 1 ]; then
-    ARG="$1"
+if (( $NARGS >= 1 )); then
+    ACTION="$1"
 else
     # Show info message if no command is specified
-    ARG="info"
+    ACTION="info"
 fi
 
-# First argument should be the action
-case $ARG in
-    "show")
-        ACTION=1
-        ;;
-    "add")
-        ACTION=2
-        ;;
-    "delete")
-        ACTION=3
-        ;;
-    "status")
-	ACTION=4
-	;;
-    "flag")
-	ACTION=5
-	;;
-    "edit")
-        ACTION=6
-        ;;
-    "search")
-        ACTION=7
-        ;;
-    "purge")
-        ACTION=8
-        ;;
-    "lists")
-        ACTION=9
-        ;;
-    "deletelist")
-        ACTION=10
-        ;;
-    "showlists")
-        ACTION=11
-        ;;
-    "searchlists")
-        ACTION=12
-        ;;
-    "purgelists")
-        ACTION=13
-        ;;
-    "print")
-        ACTION=19
-        ;;
-    "printlists")
-        ACTION=20
-        ;;
-    "help")
+# Check for immediate action items
+case $ACTION in
+
+    "help" | "-h")
         show_usage_message
         ;;
     "info")
         show_info_message
         ;;
-    "version"|"-v")
+    "version" | "-v")
         show_version
-        ;;
-    *)
-        show_error_message "action not specified correctly"
         ;;
 esac
 
-# Now check if list exist; if not create it
+#
+# Perform pre-action item tasks
+#
+# Check if list exist; if not create it
 if [ ! -f $GSDFILE ]; then
     touch "$GSDFILE"
     [ $? -ne 0 ] && show_error_message "unable to create $GSDFILE"
 fi
 
-# Now handle suboptions
-if [ $ACTION -eq 0 ]; then
+case $ACTION in
 
-    show_error_message "no action specified"
+    "show" | "showlists" | "print" | "printlists" )
 
-elif [ $ACTION -eq 1 -o $ACTION -eq 11 -o $ACTION -eq 19 -o $ACTION -eq 20 ]; then
+	if (( $NARGS > 1 )); then
 
-    # Showing or printing
-    if [ $NARGS -gt 1 ]; then
+            if (( $NARGS > 2 )); then
+		show_error_message "$1 only requires one option"
+            fi
 
-        if [ $NARGS -gt 2 ]; then
-            show_error_message "$1 only requires one option"
-        fi
+            case $2 in
+		"-n")
+                    STYPE=1
+                    ;;
+		"-i")
+                    STYPE=2
+                    ;;
+		"-c")
+                    STYPE=3
+                    ;;
+		"-f")
+                    STYPE=9
+                    ;;
+		"-h")
+                    show_usage_message
+                    ;;
+		*)
+                    show_error_message "incorrect option"
+                    ;;
+            esac
 
-        case $2 in
-            "-n")
-                STYPE=1
-                ;;
-            "-i")
-                STYPE=2
-                ;;
-            "-c")
-                STYPE=3
-                ;;
-            "-f")
-                STYPE=9
-                ;;
-            "-h")
-                show_usage_message
-                ;;
-            *)
-                show_error_message "incorrect option"
-                ;;
-        esac
+	fi
 
-    fi
+	case $ACTION in
 
-    if [ $ACTION -eq 1 ]; then
+	    "show") 
+		ENTRIES="$(show_entries ${STYPE})"
+		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+		;;
+	    "showlists")
+		ENTRIES="$(show_entries_all_lists ${STYPE})"
+		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+		;;
+	    "print") 
+		print_entries $STYPE
+		;;
+	    "printlists")
+		print_entries_all_lists $STYPE
+		;;
+	    *)
+		show_error_message "fatal"
+	esac
+	
+	;;
 
-        ENTRIES="$(show_entries ${STYPE})"
-        [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+    "add")
+	
+	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
+        # Append new entry
+	add_entry "$2"
+	;;
 
-    elif [ $ACTION -eq 11 ]; then
+    "delete")
 
-        ENTRIES="$(show_entries_all_lists ${STYPE})"
-        [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
+	delete_entry "$2"
+	;;
 
-    elif [ $ACTION -eq 19 ]; then
+    "status")
+	(( $NARGS != 3 )) && show_error_message "$1 requires <status> <tag>"
 
-        print_entries $STYPE
-
-    else
-        print_entries_all_lists $STYPE
-
-    fi
-
-elif [ $ACTION -eq 2 ]; then
-
-    [ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
-    # Append new entry
-    add_entry "$2"
-
-elif [ $ACTION -eq 3 ]; then
-
-    [ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
-
-    delete_entry "$2"
-
-elif [ $ACTION -eq 4 ]; then
-
-    (( $NARGS != 3 )) && show_error_message "$1 requires <status> <tag>"
-
-    STATUS_SYMB=$2
-    TAG=$3
-
-    case $STATUS_SYMB in
-        "n"|"N")
-            STATUS="(N)"
-            ;;
-        "i"|"I")
-            STATUS="(I)"
-            ;;
-        "c"|"C")
-            STATUS="(C)"
-            ;;
-        *)
-            show_error_message "status not specified correctly"
-            ;;
-    esac
-
-    # Modify entry
-    modify_entry_status "$STATUS" "$TAG"
-
-    # Toggle completed items off
-    [[ $STATUS == "(C)" ]] && toggle_important_flag "$TAG" "off"
-
-elif (( $ACTION == 5 )); then
-
-    (( $NARGS != 2 )) && show_error_message "$1 requires <tag>"
+	STATUS_SYMB=$2
+	TAG=$3
     
-    TAG=$2
-    toggle_important_flag "$TAG"
+	case $STATUS_SYMB in
+            "n"|"N")
+		STATUS="(N)"
+		;;
+            "i"|"I")
+		STATUS="(I)"
+		;;
+        "c"|"C")
+		STATUS="(C)"
+		;;
+            *)
+		show_error_message "status not specified correctly"
+		;;
+	esac
 
-elif [ $ACTION -eq 6 ]; then
+        # Modify entry
+	modify_entry_status "$STATUS" "$TAG"
+	
+        # Toggle completed items off
+	[[ $STATUS == "(C)" ]] && toggle_important_flag "$TAG" "off"
+	;;
 
-    # Edit entry
+    "flag")
 
-    (( $NARGS == 1 )) && show_error_message "$1 requires at least option"
+	(( $NARGS != 2 )) && show_error_message "$1 requires <tag>"
+    
+	TAG=$2
+	toggle_important_flag "$TAG"
 
-    case $2 in
+	;;
 
-        "-m")
+    "edit")
+     
+        # Edit entry
+	(( $NARGS == 1 )) && show_error_message "$1 requires at least option"
 
-            (( $NARGS != 4 )) && show_error_message "$1 $2 requires <statement> <tag>"
+	case $2 in
 
-            STATEMENT=$3
-            TAG=$4
+            "-m")
 
-            modify_entry_statement "$STATEMENT" "$TAG"
+		(( $NARGS != 4 )) && show_error_message "$1 $2 requires <statement> <tag>"
+		STATEMENT=$3
+		TAG=$4
+		modify_entry_statement "$STATEMENT" "$TAG"
+		;;
 
-	    ;;
+            "-r")
 
+		reorder_entry_tags
+		;;
 
-        "-r")
-            reorder_entry_tags
-            ;;
+            "-h")
 
-        "-h")
-            show_usage_message
-            ;;
+		show_usage_message
+		;;
 
-        *)
-            show_error_message "not a valid edit option"
-            ;;
+            *)
 
-    esac
+		show_error_message "not a valid edit option"
+		;;
 
-elif (( $ACTION == 7 )); then
+	esac
+	;;
 
-    (( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
+    "search")
 
-    ENTRIES="$(search_entries "$2")"
-    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
+	ENTRIES="$(search_entries "$2")"
+	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+	;;
 
-elif [ $ACTION -eq 8 ]; then
+    "purge")
+	
+	[ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
+        # Purge all entries with status complete
+	purge_completed_entries
+	;;
 
-    [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
-    # Purge all entries with status complete
-    purge_completed_entries
+    "lists")
 
-elif [ $ACTION -eq 9 ]; then
         # Show available lists
-    [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
+	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
+	ENTRIES="$(show_available_lists)"
+	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+	;;
+    
+    "deletelist")
 
-    ENTRIES="$(show_available_lists)"
-    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
-
-elif [ $ACTION -eq 10 ]; then
         # Delete specified list
-    [ $NARGS -ne 2 ] && show_error_message "$1 requires <list>"
-    delete_list "$2"
+	(( $NARGS != 2 )) && show_error_message "$1 requires <list>"
+	delete_list "$2"
+	;;
 
+    "searchlists")
+	
+	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
+	ENTRIES="$(search_entries_all_lists "$2")"
+	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
+	;;
+    
+    "purgelists")
+	
+	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
+        # Purge all entries with status complete
+	purge_completed_entries_all_lists
+	;;
 
-elif [ $ACTION -eq 12 ]; then
-
-    [ $NARGS -ne 2 ] && show_error_message "$1 requires search phrase"
-
-    ENTRIES="$(search_entries_all_lists "$2")"
-    [[ ! -z $ENTRIES ]] && echo "$ENTRIES"
-
-elif [ $ACTION -eq 13 ]; then
-
-    [ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
-    # Purge all entries with status complete
-    purge_completed_entries_all_lists
-
-else
-
-    show_error_message "action not specified correctly"
-
-fi
-
+    *)
+	show_error_message "no action specified"
+	;;
+    
+        
+esac
+    
 exit 0
 
