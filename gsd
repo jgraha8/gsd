@@ -1181,13 +1181,13 @@ fi
 # Check for immediate action items
 case $ACTION in
 
-    "help" | "-h")
+    "help" | "h")
         show_usage_message
         ;;
-    "info")
+    "info" | "i")
         show_info_message
         ;;
-    "version" | "-v")
+    "version" | "v")
         show_version
         ;;
 esac
@@ -1203,7 +1203,7 @@ fi
 
 case $ACTION in
 
-    "show" | "showlists" | "print" | "printlists" )
+    "show" | "s" | "showlists" | "sl" | "print" | "p" | "printlists" | "pl" )
 
 	if (( $NARGS > 1 )); then
 
@@ -1236,18 +1236,18 @@ case $ACTION in
 
 	case $ACTION in
 
-	    "show") 
+	    "show" | "s") 
 		ENTRIES="$(show_entries ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 		;;
-	    "showlists")
+	    "showlists" | "sl")
 		ENTRIES="$(show_entries_all_lists ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 		;;
-	    "print") 
+	    "print" | "p") 
 		print_entries $STYPE
 		;;
-	    "printlists")
+	    "printlists" | "pl")
 		print_entries_all_lists $STYPE
 		;;
 	    *)
@@ -1256,20 +1256,20 @@ case $ACTION in
 	
 	;;
 
-    "add")
+    "add" | "a")
 	
 	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
         # Append new entry
 	add_entry "$2"
 	;;
 
-    "delete")
+    "delete" | "d")
 
 	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
 	delete_entry "$2"
 	;;
 
-    "status")
+    "status" | "st")
 	(( $NARGS != 3 )) && show_error_message "$1 requires <status> <tag>"
 
 	STATUS_SYMB=$2
@@ -1297,7 +1297,7 @@ case $ACTION in
 	[[ $STATUS == "(C)" ]] && toggle_important_flag "$TAG" "off"
 	;;
 
-    "flag")
+    "flag" | "f")
 
 	(( $NARGS != 2 )) && show_error_message "$1 requires <tag>"
     
@@ -1306,7 +1306,7 @@ case $ACTION in
 
 	;;
 
-    "edit")
+    "edit" | "e")
      
         # Edit entry
 	(( $NARGS == 1 )) && show_error_message "$1 requires at least one option"
@@ -1339,21 +1339,21 @@ case $ACTION in
 	esac
 	;;
 
-    "search")
+    "search" | "se")
 
 	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
 	ENTRIES="$(search_entries "$2")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
 
-    "purge")
+    "purge" | "pu")
 	
 	[ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
         # Purge all entries with status complete
 	purge_completed_entries
 	;;
 
-    "lists")
+    "lists" | "l")
 
         # Show available lists
 	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
@@ -1361,21 +1361,21 @@ case $ACTION in
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
     
-    "deletelist")
+    "deletelist" | "dl")
 
         # Delete specified list
 	(( $NARGS != 2 )) && show_error_message "$1 requires <list>"
 	delete_list "$2"
 	;;
 
-    "searchlists")
+    "searchlists" | "sl")
 	
 	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
 	ENTRIES="$(search_entries_all_lists "$2")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
     
-    "purgelists")
+    "purgelists" | "pul")
 	
 	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
         # Purge all entries with status complete
