@@ -23,7 +23,7 @@
 ############################################################################
 
 # Adjust text colors based on terminal background
-DARK_BACKGROUND="no"
+DARK_BACKGROUND="yes"
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
