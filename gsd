@@ -23,7 +23,7 @@
 ############################################################################
 
 # Adjust text colors based on terminal background
-DARK_BACKGROUND="no"
+DARK_BACKGROUND="yes"
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
@@ -1368,7 +1368,7 @@ case $ACTION in
 	delete_list "$2"
 	;;
 
-    "searchlists" | "sl")
+    "searchlists" | "sel")
 	
 	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
 	ENTRIES="$(search_entries_all_lists "$2")"
