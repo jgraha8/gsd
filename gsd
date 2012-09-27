@@ -1203,7 +1203,7 @@ fi
 
 case $ACTION in
 
-    "show" | "s" | "showlists" | "sl" | "print" | "p" | "printlists" | "pl" )
+    "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" )
 
 	if (( $NARGS > 1 )); then
 
@@ -1244,10 +1244,10 @@ case $ACTION in
 		ENTRIES="$(show_entries_all_lists ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 		;;
-	    "print" | "p") 
+	    "print" | "pr") 
 		print_entries $STYPE
 		;;
-	    "printlists" | "pl")
+	    "printlists" | "prl")
 		print_entries_all_lists $STYPE
 		;;
 	    *)
@@ -1346,7 +1346,7 @@ case $ACTION in
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
 
-    "purge" | "pu")
+    "purge" | "p")
 	
 	[ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
         # Purge all entries with status complete
@@ -1375,7 +1375,7 @@ case $ACTION in
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
     
-    "purgelists" | "pul")
+    "purgelists" | "pl")
 	
 	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
         # Purge all entries with status complete
