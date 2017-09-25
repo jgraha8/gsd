@@ -1,0 +1,4 @@
+# Adjust text colors based on terminal background
+DARK_BACKGROUND="yes"
+# Recipient to recieve mail (if commented it goes to user at localhost)
+MAIL_RECIPIENT="user@somewhere.net"

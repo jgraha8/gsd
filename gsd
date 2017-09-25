@@ -22,13 +22,11 @@
 #
 ############################################################################
 
-# Adjust text colors based on terminal background
-DARK_BACKGROUND="yes"
-
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
 GSDDEFAULT="$GSDDIR/default.lst"
 GSDVERSION="git"
+
 
 # Attribute codes:
 # 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
@@ -49,18 +47,6 @@ BLUE='01;34'
 MAGENTA="01;35"
 CYAN="01;36"
 
-# Specify colors for new, incomplete, completed and flagged Besure to
-# use the ANSI code \033 and not the escape character \e to support
-# both Linux and Mac
-if [[ "$DARK_BACKGROUND" == "yes" ]]; then
-    COLOR_NEW="\033[${BLUE}m"
-    COLOR_INCOMPLETE="\033[${YELLOW}m"
-    COLOR_COMPLETE="\033[${GREEN}m"
-else
-    COLOR_NEW="\033[${BLUE}m"
-    COLOR_INCOMPLETE="\033[${CYAN}m"
-    COLOR_COMPLETE="\033[${MAGENTA}m"
-fi
 COLOR_FLAG="\033[${RED}m"
 COLOR_LIST="\033[${BLUE}m"
 COLOR_END="\033[0m"
@@ -91,47 +77,59 @@ function show_usage_message {
     echo "  -l <list>                 Specify which list to use"
     echo " "
     echo "Commands:"
-    echo "  help                      Print this message"
-    echo "  info                      Show basic usage"
-    echo "  show                      Show entries in list"
+    echo "  h, help                   Print this message"
+    echo "  i, info                   Show basic usage"
+    echo "  s, show                   Show entries in list"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
     echo "      -i                    Show only entries with status incomplete"
     echo "      -c                    Show only entries with status complete"
     echo "      -f                    Show only flagged entries"
-    echo "  add <statement>           Add new entry"
-    echo "  delete <tag>              Delete entry"
-    echo "  status {N|I|C} <tag>      Change status of entry"
-    echo "  flag <tag>                Toggle important flag"
-    echo "  edit                      Edit entry in list"
+    echo "  a, add <statement>        Add new entry"
+    echo "  d, delete <tag>           Delete entry"
+    echo "  st, status {N|I|C} <tag>  Change status of entry"
+    echo "  f, flag <tag>             Toggle important flag"
+    echo "  e, edit                   Edit entry in list"
     echo "    Options:"
     echo "      -m <statement>        Change entry statement"
     echo "      -r                    Reorder entry tags"
-    echo "  search <phrase>           Perform text search on entries"
-    echo "  purge                     Remove all completed entries"
-    echo "  print                     Send list entries to printer"
+    echo "  se, search <phrase>       Perform text search on entries"
+    echo "  p, purge                  Remove all completed entries"
+    echo "  pr, print                 Send list entries to printer"
     echo "    Options:"
     echo "      -n                    Print only entries with status new"
     echo "      -i                    Print only entries with status incomplete"
     echo "      -c                    Print only entries with status complete"
     echo "      -f                    Print only flagged entries"
-    echo "  lists                     Show which lists are available"
-    echo "  deletelist <list>         Delete list"
-    echo "  showlists                 Show entries in all lists"
+    echo "  m, mail                   Email list entries"
+    echo "    Options:"
+    echo "      -n                    Email only entries with status new"
+    echo "      -i                    Email only entries with status incomplete"
+    echo "      -c                    Email only entries with status complete"
+    echo "      -f                    Email only flagged entries"
+    echo "  l, lists                  Show which lists are available"
+    echo "  dl, deletelist <list>     Delete list"
+    echo "  sl, showlists             Show entries in all lists"
     echo "    Options:"
     echo "      -n                    Show only entries with status new"
     echo "      -i                    Show only entries with status incomplete"
     echo "      -c                    Show only entries with status complete"
     echo "      -f                    Show only flagged entries"
-    echo "  searchlists <phrase>      Search specified phrase in all lists"
-    echo "  purgelists                Remove all completed entries in all lists"
-    echo "  printlists                Send entries in all lists to printer "
+    echo "  sel, searchlists <phrase> Search specified phrase in all lists"
+    echo "  pl, purgelists            Remove all completed entries in all lists"
+    echo "  prl, printlists           Send entries in all lists to printer "
     echo "    Options:"
     echo "      -n                    Print only entries with status new"
     echo "      -i                    Print only entries with status incomplete"
     echo "      -c                    Print only entries with status complete"
     echo "      -f                    Print only flagged entries"
-    echo "  version                   Show version information"
+    echo "  ml, maillists             Email entries in all lists"
+    echo "    Options:"
+    echo "      -n                    Email only entries with status new"
+    echo "      -i                    Email only entries with status incomplete"
+    echo "      -c                    Email only entries with status complete"
+    echo "      -f                    Email only flagged entries"
+    echo "  v, version                Show version information"
     exit 0
 }
 
@@ -143,24 +141,26 @@ function show_info_message {
     echo "Usage: $SCRIPTNAME [options] <command> [args]"
     echo ""
     echo "The most commonly used $SCRIPTNAME commands are:"
-    echo "  help                      Print extended help message"
-    echo "  info                      Print this message"
-    echo "  show                      Show entries in list"
-    echo "  add                       Add new entry"
-    echo "  delete                    Delete entry"
-    echo "  status                    Change status of entry"
-    echo "  flag                      Toggle important flag"
-    echo "  edit                      Edit entry in list"
-    echo "  search                    Perform text search on entries"
-    echo "  purge                     Remove all completed entries"
-    echo "  print                     Send list entries to printer"
-    echo "  lists                     Show which lists are available"
-    echo "  deletelist                Delete list"
-    echo "  showlists                 Show entries in all lists"
-    echo "  searchlists               Search phrase in all lists"
-    echo "  purgelists                Remove all completed entries in all lists"
-    echo "  printlists                Send entries in all lists to printer "
-    echo "  version                   Show version information"
+    echo "  h, help                   Print extended help message"
+    echo "  i, info                   Print this message"
+    echo "  s, show                   Show entries in list"
+    echo "  a, add                    Add new entry"
+    echo "  d, delete                 Delete entry"
+    echo "  st, status                Change status of entry"
+    echo "  f, flag                   Toggle important flag"
+    echo "  e, edit                   Edit entry in list"
+    echo "  se, search                Perform text search on entries"
+    echo "  p, purge                  Remove all completed entries"
+    echo "  pr, print                 Send list entries to printer"
+    echo "  m, mail                   Email list entries"    
+    echo "  l, lists                  Show which lists are available"
+    echo "  dl, deletelist            Delete list"
+    echo "  sl, showlists             Show entries in all lists"
+    echo "  sel, searchlists          Search phrase in all lists"
+    echo "  pl, purgelists            Remove all completed entries in all lists"
+    echo "  prl, printlists           Send entries in all lists to printer "
+    echo "  ml, maillists             Email entries in all lists"    
+    echo "  v, version                Show version information"
     echo ""
     echo "See '$SCRIPTNAME help' for more information."
     exit 0
@@ -634,14 +634,15 @@ function show_entries {
 
 }
 
+
 #-------------------------------------------------------------------
-# PRINT_ENTRIES
+# ASCII_FORMAT_ENTRIES
 #--------------------------------------------------------------------
 
-function print_entries {
+function ascii_format_entries {
 
     local _stype=$1
-    local _ltype
+    local _output=$2
 
     # Colored printing not supported; Unset color variables as a
     # workaround
@@ -653,9 +654,49 @@ function print_entries {
     unset COLOR_END
 
     # Send to printer; requires $PRINTER to be set
-    show_entries $_stype | lpr -p
+    show_entries $_stype > $_output
 
-    [ $? -ne 0 ] && show_error_message "unable to print"
+    [ $? -ne 0 ] && show_error_message "unable to format entries"
+
+    return 0
+
+}
+
+
+#-------------------------------------------------------------------
+# PRINT_ENTRIES
+#--------------------------------------------------------------------
+
+function print_entries {
+    local _stype=$1
+    
+    ascii_format_entries $_stype $GSDDIR/.entries
+    
+    cat $GSDDIR/.entries | lpr -p    
+    local rc=$?
+    rm -f $GSDDIR/.entries
+    
+    [ $rc -ne 0 ] && show_error_message "unable to print"
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
+# MAIL_ENTRIES
+#--------------------------------------------------------------------
+
+function mail_entries {
+
+    local _stype=$1
+    
+    ascii_format_entries $_stype $GSDDIR/.entries
+
+    mail -s "gsd: $(date)" "${MAIL_RECIPIENT}" < $GSDDIR/.entries
+    local rc=$?
+    rm -f $GSDDIR/.entries
+    
+    [ $rc -ne 0 ] && show_error_message "unable to mail to ${MAIL_RECIPIENT}"
 
     return 0
 
@@ -1122,13 +1163,14 @@ function purge_completed_entries_all_lists {
 
 }
 
-#---------------------------------------------------------------------
-# PRINT_ENTRIES_ALL_LISTS
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------
+# ASCII_FORMAT_ENTRIES
+#--------------------------------------------------------------------
 
-function print_entries_all_lists {
+function ascii_format_entries_all_lists {
 
     local _stype=$1
+    local _output=$2
 
     # Colored printing not supported; Unset color variables as a
     # workaround
@@ -1139,9 +1181,49 @@ function print_entries_all_lists {
     unset COLOR_LIST
     unset COLOR_END
 
-    show_entries_all_lists $_stype | lpr -p
+    # Send to printer; requires $PRINTER to be set
+    show_entries_all_lists $_stype > $_output
 
-    [ $? -ne 0 ] && show_error_message "unable to print lists"
+    [ $? -ne 0 ] && show_error_message "unable to format entries"
+
+    return 0
+
+}
+
+#---------------------------------------------------------------------
+# PRINT_ENTRIES_ALL_LISTS
+#---------------------------------------------------------------------
+
+function print_entries_all_lists {
+    local _stype=$1
+    
+    ascii_format_entries_all_lists $_stype $GSDDIR/.entries
+    
+    cat $GSDDIR/.entries | lpr -p    
+    local rc=$?
+    rm -f $GSDDIR/.entries
+    
+    [ $rc -ne 0 ] && show_error_message "unable to print lists"
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
+# MAIL_ENTRIES_ALL_LISTS
+#--------------------------------------------------------------------
+
+function mail_entries_all_lists {
+
+    local _stype=$1
+    
+    ascii_format_entries_all_lists $_stype $GSDDIR/.entries
+    
+    mail -s "gsd: $(date)" "${MAIL_RECIPIENT}" < $GSDDIR/.entries
+    local rc=$?
+    rm -f $GSDDIR/.entries
+    
+    [ $rc -ne 0 ] && show_error_message "unable to mail lists to ${MAIL_RECIPIENT}"
 
     return 0
 
@@ -1157,6 +1239,27 @@ if [ ! -d $GSDDIR ]; then
     mkdir $GSDDIR
     [ $? -ne 0 ] && show_error_message "unable to create $GSDDIR"
 fi
+
+if [ -f $GSDDIR/config ]; then
+    . $GSDDIR/config
+fi
+
+DARK_BACKGROUND=${DARK_BACKGROUND:-yes}
+MAIL_RECIPIENT=${MAIL_RECIPIENT:-"${USER}@localhost"}
+
+# Specify colors for new, incomplete, completed and flagged Besure to
+# use the ANSI code \033 and not the escape character \e to support
+# both Linux and Mac
+if [[ "$DARK_BACKGROUND" == "yes" ]]; then
+    COLOR_NEW="\033[${BLUE}m"
+    COLOR_INCOMPLETE="\033[${YELLOW}m"
+    COLOR_COMPLETE="\033[${GREEN}m"
+else
+    COLOR_NEW="\033[${BLUE}m"
+    COLOR_INCOMPLETE="\033[${CYAN}m"
+    COLOR_COMPLETE="\033[${MAGENTA}m"
+fi
+
 
 # Now see if a list was specified
 if [[ $1 == "-l" ]]; then
@@ -1203,7 +1306,7 @@ fi
 
 case $ACTION in
 
-    "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" )
+    "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" | "mail" | "m" | "maillists" | "ml" )
 
 	if (( $NARGS > 1 )); then
 
@@ -1249,6 +1352,12 @@ case $ACTION in
 		;;
 	    "printlists" | "prl")
 		print_entries_all_lists $STYPE
+		;;
+	    "mail" | "m") 
+		mail_entries $STYPE
+		;;
+	    "maillists" | "ml")
+		mail_entries_all_lists $STYPE
 		;;
 	    *)
 		show_error_message "fatal"
