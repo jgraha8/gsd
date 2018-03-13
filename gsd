@@ -90,7 +90,7 @@ function show_usage_message {
     echo "  im, import <file>         Import a file of new entries (one entry per line)"
     echo "  d, delete <tag>           Delete entry"
     echo "  st, status {N|I|C} <tag>  Change status of entry"
-    echo "  f, flag <tag>             Toggle important flag"
+    echo "  f, flag <tag-spec>        Toggle important flag"
     echo "  e, edit                   Edit entry in list"
     echo "    Options:"
     echo "      -m                    Change entry statement"
@@ -1006,7 +1006,7 @@ function reorder_entry_tags {
 
 function toggle_important_flag {
 
-    local _tag="$1"
+    local _tag_spec="$1"
     (( $# == 2 )) && local _state="$2" # State which only to toggle ("on" or "off")
 
     local _state_crit # Change criterion
@@ -1032,43 +1032,74 @@ function toggle_important_flag {
 
     local _line
     local _linenumber
+    local _tag_sets
+    local _tag_range
+    local _tag_set
 
-    get_entry_line_number "$_tag"
-    _linenumber=$?
+    IFS=',' read -ra _tag_sets <<< "$_tag_spec"
+    for _tag_set in ${_tag_sets[@]}
+    do
+	local -i _tag_start;
+	local -i _tag_end;
+	local -i _tag
+	
+	if [[ $_tag_set == *"-"* ]]; then
+	    IFS='-' read -ra _tag_range <<< "$_tag_set"
 
-    _line=$(sed -n ${_linenumber}p $GSDFILE)
+	    if (( ${#_tag_range[@]} != 2 )); then
+		show_error_message "tag range $_tag_set not specified correctly"
+	    fi
+	    _tag_start=${_tag_range[0]}
+	    _tag_end=${_tag_range[1]}
+	else
+	    _tag_start=$_tag_set
+	    _tag_end=$_tag_start
+	fi
+	
+	if (( _tag_end < _tag_start )); then
+	    show_error_message "tag range $_tag_set not specified correctly"
+	fi
+	
+	for (( _tag = $_tag_start; _tag <= $_tag_end; ++_tag ))
+	do
+	    get_entry_line_number "$_tag"
+	    _linenumber=$?
 
-    # Extract the status
-    _status=$(show_entry_status "$_line")
-    _statement=$(show_entry_statement "$_line")
+	    _line=$(sed -n ${_linenumber}p $GSDFILE)
 
-    # First see if the statement is marked as important
-    check_important_flag "$_line"
+	    # Extract the status
+	    _status=$(show_entry_status "$_line")
+	    _statement=$(show_entry_statement "$_line")
 
-    if (( $? == 1 && ( $_state_crit == 0 || $_state_crit == 11 ) )); then
-        _flag=""
-    elif (( $_state_crit == 0 || $_state_crit == 10 )); then
-        _flag="(*)"
-        # Add important tag
-    else
-	# Not changing the entry
-	return 0 
-    fi
+	    # First see if the statement is marked as important
+	    check_important_flag "$_line"
 
-    # Reconstruct the line
-    _line="$_tag:$_status:$_flag:$_statement"
+	    if (( $? == 1 && ( $_state_crit == 0 || $_state_crit == 11 ) )); then
+		_flag=""
+	    elif (( $_state_crit == 0 || $_state_crit == 10 )); then
+		_flag="(*)"
+		# Add important tag
+	    else
+		# Not changing the entry
+		return 0 
+	    fi
 
-    # Update the entry in the gsd file
-    #sed -i.tmp "$_linenumber c$_line" $GSDFILE
-    $SED_WRITE_LINE "$_linenumber" "$_line" "$GSDFILE"
+	    # Reconstruct the line
+	    _line="$_tag:$_status:$_flag:$_statement"
 
-    if [ $? -ne 0 ]; then
-        cp $GSDFILE.tmp $GSDFILE
-        show_error_message "could not toggle flag"
-    else
-        rm -f $GSDFILE.tmp
-    fi
+	    # Update the entry in the gsd file
+	    #sed -i.tmp "$_linenumber c$_line" $GSDFILE
+	    $SED_WRITE_LINE "$_linenumber" "$_line" "$GSDFILE"
 
+	    if [ $? -ne 0 ]; then
+		cp $GSDFILE.tmp $GSDFILE
+		show_error_message "could not toggle flag"
+	    else
+		rm -f $GSDFILE.tmp
+	    fi
+	done
+    done
+    
     return 0
 
 }
@@ -1437,10 +1468,10 @@ case $ACTION in
 
     "flag" | "f")
 
-	(( $NARGS != 2 )) && show_error_message "$1 requires <tag>"
+	(( $NARGS != 2 )) && show_error_message "$1 requires <tag-spec>"
     
-	TAG=$2
-	toggle_important_flag "$TAG"
+	TAG_SPEC=$2
+	toggle_important_flag "$TAG_SPEC"
 
 	;;
 
