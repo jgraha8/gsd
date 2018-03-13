@@ -793,7 +793,7 @@ function add_entry {
 
     _tag=$(show_last_entry_tag)
     _tag=$((_tag+1))
-    echo "$_tag:(N):<NULL>:$_statement" >> $GSDFILE
+    echo "$_tag:(N)::$_statement" >> $GSDFILE
 
     if [ $? -eq 0 ]; then
 	echo "Added new entry at tag $_tag"
@@ -1024,7 +1024,7 @@ function toggle_important_flag {
     check_important_flag "$_line"
 
     if (( $? == 1 && ( $_state_crit == 0 || $_state_crit == 11 ) )); then
-        _flag="<NULL>"
+        _flag=""
     elif (( $_state_crit == 0 || $_state_crit == 10 )); then
         _flag="(*)"
         # Add important tag
