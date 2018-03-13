@@ -27,7 +27,7 @@ SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
 GSDDEFAULT="$GSDDIR/default.lst"
 GSDVERSION="git"
-
+GSD_EDITOR=${EDITOR:-vim}
 
 # Attribute codes:
 # 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
@@ -87,12 +87,13 @@ function show_usage_message {
     echo "      -c                    Show only entries with status complete"
     echo "      -f                    Show only flagged entries"
     echo "  a, add <statement>        Add new entry"
+    echo "  im, import <file>         Import a file of new entries (one entry per line)"
     echo "  d, delete <tag>           Delete entry"
     echo "  st, status {N|I|C} <tag>  Change status of entry"
     echo "  f, flag <tag>             Toggle important flag"
     echo "  e, edit                   Edit entry in list"
     echo "    Options:"
-    echo "      -m <statement>        Change entry statement"
+    echo "      -m                    Change entry statement"
     echo "      -r                    Reorder entry tags"
     echo "  se, search <phrase>       Perform text search on entries"
     echo "  p, purge                  Remove all completed entries"
@@ -146,6 +147,7 @@ function show_info_message {
     echo "  i, info                   Print this message"
     echo "  s, show                   Show entries in list"
     echo "  a, add                    Add new entry"
+    echo "  im, import                Import a file of new entries (one entry per line)"    
     echo "  d, delete                 Delete entry"
     echo "  st, status                Change status of entry"
     echo "  f, flag                   Toggle important flag"
@@ -747,8 +749,7 @@ function modify_entry_status {
 
 function modify_entry_statement {
 
-    local _statement="$1"
-    local _tag="$2"
+    local _tag="$1"
 
     local _status
     local _linenumber
@@ -764,6 +765,12 @@ function modify_entry_statement {
     _status=$(show_entry_status "$_line")
     # Extract flag
     _flag=$(show_entry_flag "$_line")
+    # Create tmp file with old statement and open
+    show_entry_statement "$_line" > $GSDFILE-entry${_tag}.tmp
+
+    $GSD_EDITOR $GSDFILE-entry${_tag}.tmp
+    _statement=$(cat $GSDFILE-entry${_tag}.tmp)
+    rm -f $GSDFILE-entry${_tag}.tmp
 
     # Generate entry
     _line="$_tag:$_status:$_flag:$_statement"
@@ -805,6 +812,20 @@ function add_entry {
 
 }
 
+#-------------------------------------------------------------------
+# ADD_ENTRY
+#--------------------------------------------------------------------
+
+function import_entries {
+
+    local _file="$1"
+
+    while read line
+    do
+	add_entry "$line"
+    done<$_file
+
+}
 #-------------------------------------------------------------------
 # DELETE_ENTRY
 #--------------------------------------------------------------------
@@ -1373,6 +1394,13 @@ case $ACTION in
 	add_entry "$2"
 	;;
 
+    "import" | "im")
+	
+	[ $NARGS -ne 2 ] && show_error_message "$1 requires <file>"
+        # Append new entry
+	import_entries "$2"
+	;;
+    
     "delete" | "d")
 
 	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
@@ -1425,10 +1453,9 @@ case $ACTION in
 
             "-m")
 
-		(( $NARGS != 4 )) && show_error_message "$1 $2 requires <statement> <tag>"
-		STATEMENT=$3
-		TAG=$4
-		modify_entry_statement "$STATEMENT" "$TAG"
+		(( $NARGS != 3 )) && show_error_message "$1 $2 requires <tag>"
+		TAG=$3
+		modify_entry_statement "$TAG"
 		;;
 
             "-r")
