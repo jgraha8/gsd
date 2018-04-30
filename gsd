@@ -25,8 +25,8 @@
 
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
-GSDDEFAULT="$GSDDIR/default.lst"
-GSDVERSION="git"
+GSDLIST="default"
+GSDVERSION="0.30"
 GSD_EDITOR=${EDITOR:-vim}
 
 # Attribute codes:
@@ -75,63 +75,64 @@ function show_usage_message {
     echo "Usage: $SCRIPTNAME [options] <command> [args]"
     echo ""
     echo "Options:"
-    echo "  -l <list>                 Specify which list to use"
+    echo "  -d <dir>                    Specify which gsd directory to use (default: \$HOME/.gsd)"    
+    echo "  -l <list>                   Specify which list to use (default: default)"
     echo " "
     echo "Commands:"
-    echo "  h, help                   Print this message"
-    echo "  i, info                   Show basic usage"
-    echo "  s, show                   Show entries in list"
+    echo "  h, help                     Print this message"
+    echo "  i, info                     Show basic usage"
+    echo "  s, show                     Show entries in list"
     echo "    Options:"
-    echo "      -n                    Show only entries with status new"
-    echo "      -i                    Show only entries with status incomplete"
-    echo "      -c                    Show only entries with status complete"
-    echo "      -f                    Show only flagged entries"
-    echo "  a, add <statement>        Add new entry"
-    echo "  im, import <file>         Import a file of new entries (one entry per line)"
-    echo "  d, delete <tag>           Delete entry"
-    echo "  st, status {N|I|C} <tag>  Change status of entry"
-    echo "  f, flag <tag-spec>        Toggle important flag"
-    echo "  e, edit                   Edit entry in list"
+    echo "      -n                      Show only entries with status new"
+    echo "      -i                      Show only entries with status incomplete"
+    echo "      -c                      Show only entries with status complete"
+    echo "      -f                      Show only flagged entries"
+    echo "  a, add <statement>          Add new entry"
+    echo "  im, import <file>           Import a file of new entries (one entry per line)"
+    echo "  d, delete <tag>             Delete entry"
+    echo "  st, status {N|I|C} <tag>    Change status of entry"
+    echo "  f, flag <tag-spec>          Toggle important flag"
+    echo "  e, edit                     Edit entry in list"
     echo "    Options:"
-    echo "      -m                    Change entry statement"
-    echo "      -r                    Reorder entry tags"
-    echo "  se, search <phrase>       Perform text search on entries"
-    echo "  p, purge                  Remove all completed entries"
-    echo "  pr, print                 Send list entries to printer"
+    echo "      -m                      Change entry statement"
+    echo "      -r                      Reorder entry tags"
+    echo "  se, search <phrase>         Perform text search on entries"
+    echo "  p, purge                    Remove all completed entries"
+    echo "  pr, print                   Send list entries to printer"
     echo "    Options:"
-    echo "      -n                    Print only entries with status new"
-    echo "      -i                    Print only entries with status incomplete"
-    echo "      -c                    Print only entries with status complete"
-    echo "      -f                    Print only flagged entries"
-    echo "  m, mail                   Email list entries"
+    echo "      -n                      Print only entries with status new"
+    echo "      -i                      Print only entries with status incomplete"
+    echo "      -c                      Print only entries with status complete"
+    echo "      -f                      Print only flagged entries"
+    echo "  m, mail [recp-list]         Email list entries"
     echo "    Options:"
-    echo "      -n                    Email only entries with status new"
-    echo "      -i                    Email only entries with status incomplete"
-    echo "      -c                    Email only entries with status complete"
-    echo "      -f                    Email only flagged entries"
-    echo "  l, lists                  Show which lists are available"
-    echo "  dl, deletelist <list>     Delete list"
-    echo "  sl, showlists             Show entries in all lists"
+    echo "      -n                      Email only entries with status new"
+    echo "      -i                      Email only entries with status incomplete"
+    echo "      -c                      Email only entries with status complete"
+    echo "      -f                      Email only flagged entries"
+    echo "  l, lists                    Show which lists are available"
+    echo "  dl, deletelist <list>       Delete list"
+    echo "  sl, showlists               Show entries in all lists"
     echo "    Options:"
-    echo "      -n                    Show only entries with status new"
-    echo "      -i                    Show only entries with status incomplete"
-    echo "      -c                    Show only entries with status complete"
-    echo "      -f                    Show only flagged entries"
-    echo "  sel, searchlists <phrase> Search specified phrase in all lists"
-    echo "  pl, purgelists            Remove all completed entries in all lists"
-    echo "  prl, printlists           Send entries in all lists to printer "
+    echo "      -n                      Show only entries with status new"
+    echo "      -i                      Show only entries with status incomplete"
+    echo "      -c                      Show only entries with status complete"
+    echo "      -f                      Show only flagged entries"
+    echo "  sel, searchlists <phrase>   Search specified phrase in all lists"
+    echo "  pl, purgelists              Remove all completed entries in all lists"
+    echo "  prl, printlists             Send entries in all lists to printer "
     echo "    Options:"
-    echo "      -n                    Print only entries with status new"
-    echo "      -i                    Print only entries with status incomplete"
-    echo "      -c                    Print only entries with status complete"
-    echo "      -f                    Print only flagged entries"
-    echo "  ml, maillists             Email entries in all lists"
+    echo "      -n                      Print only entries with status new"
+    echo "      -i                      Print only entries with status incomplete"
+    echo "      -c                      Print only entries with status complete"
+    echo "      -f                      Print only flagged entries"
+    echo "  ml, maillists  [recp-list]  Email entries in all lists"
     echo "    Options:"
-    echo "      -n                    Email only entries with status new"
-    echo "      -i                    Email only entries with status incomplete"
-    echo "      -c                    Email only entries with status complete"
-    echo "      -f                    Email only flagged entries"
-    echo "  v, version                Show version information"
+    echo "      -n                      Email only entries with status new"
+    echo "      -i                      Email only entries with status incomplete"
+    echo "      -c                      Email only entries with status complete"
+    echo "      -f                      Email only flagged entries"
+    echo "  v, version                  Show version information"
     exit 0
 }
 
@@ -1132,16 +1133,7 @@ function show_available_lists {
 
 function delete_list {
 
-    local _list="$1"
-
-    case $_list in
-        "default")
-            _gsdfile="$GSDDEFAULT"
-            ;;
-        *)
-            _gsdfile="${GSDDIR}/${_list}.lst"
-            ;;
-    esac
+    local _gsdfile="${GSDDIR}/$1.lst"    
 
     if [ ! -f "$_gsdfile" ]; then
         show_error_message "specified list does not exisit"
@@ -1282,10 +1274,51 @@ function mail_entries_all_lists {
 
 }
 
+function set_stype {
+    case $1 in
+	"-n")
+	    STYPE=1
+	    ;;
+	"-i")
+	    STYPE=2
+	    ;;
+	"-c")
+	    STYPE=3
+	    ;;
+	"-f")
+	    STYPE=9
+	    ;;
+	"-h")
+	    show_usage_message
+	    ;;
+	*)
+	    show_error_message "incorrect option"
+	    ;;
+    esac
+}
 
 #####################################################################
 # MAIN
 #####################################################################
+
+# Process options
+while [[ $1 == "-"* ]]
+do
+    case $1 in
+	"-d")
+	    GSDDIR="$2"
+	    shift 2
+	    ;;
+	"-l")
+	    GSDLIST="$2"
+	    shift 2
+	    ;;
+	*)
+            show_error_message "incorrect option"
+            ;;
+    esac
+done
+GSDFILE="$GSDDIR/$GSDLIST.lst"
 
 # First check that the GSD file exists and is readable
 if [ ! -d $GSDDIR ]; then
@@ -1313,22 +1346,12 @@ else
     COLOR_COMPLETE="\033[${MAGENTA}m"
 fi
 
-
-# Now see if a list was specified
-if [[ $1 == "-l" ]]; then
-    GSDFILE="$GSDDIR/$2.lst"
-    # Shift 2 places in the argument list
-    shift 2
-else
-    GSDFILE="$GSDDEFAULT"
-fi
-
 declare -i STYPE=0
 declare -i ETYPE=0
 
-NARGS=$#
-if (( $NARGS >= 1 )); then
+if (( $# >= 1 )); then
     ACTION="$1"
+    shift
 else
     # Show info message if no command is specified
     ACTION="info"
@@ -1339,12 +1362,15 @@ case $ACTION in
 
     "help" | "h")
         show_usage_message
+	exit 0
         ;;
     "info" | "i")
         show_info_message
+	exit 0
         ;;
     "version" | "v")
         show_version
+	exit 0	
         ;;
 esac
 
@@ -1359,39 +1385,46 @@ fi
 
 case $ACTION in
 
-    "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" | "mail" | "m" | "maillists" | "ml" )
+    "mail" | "m" | "maillists" | "ml" )
+        if (( $# > 2 )); then
+	    show_error_message "$ACTION only requires at most two options"
+        fi
 
-	if (( $NARGS > 1 )); then
+	if (( $# >= 1 )) && [[ $1 == "-"* ]];  then
+	    set_stype $1
+	    shift
+	fi
+	
+	if (( $# > 0 )); then
+	    MAIL_RECIPIENT="$1"
+	    shift
+	fi
+	
+	case $ACTION in
+	    "mail" | "m") 
+		mail_entries $STYPE
+		;;
+	    "maillists" | "ml")
+		mail_entries_all_lists $STYPE
+		;;
+	    *)
+		show_error_message "fatal"
+	esac
+	;;
+	
+    "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" )
 
-            if (( $NARGS > 2 )); then
-		show_error_message "$1 only requires one option"
+	if (( $# > 0 )); then
+
+            if (( $# > 1 )); then
+		show_error_message "$ACTION only requires one option"
             fi
 
-            case $2 in
-		"-n")
-                    STYPE=1
-                    ;;
-		"-i")
-                    STYPE=2
-                    ;;
-		"-c")
-                    STYPE=3
-                    ;;
-		"-f")
-                    STYPE=9
-                    ;;
-		"-h")
-                    show_usage_message
-                    ;;
-		*)
-                    show_error_message "incorrect option"
-                    ;;
-            esac
-
+	    set_stype $1
+	    shift
 	fi
 
 	case $ACTION in
-
 	    "show" | "s") 
 		ENTRIES="$(show_entries ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
@@ -1406,43 +1439,36 @@ case $ACTION in
 	    "printlists" | "prl")
 		print_entries_all_lists $STYPE
 		;;
-	    "mail" | "m") 
-		mail_entries $STYPE
-		;;
-	    "maillists" | "ml")
-		mail_entries_all_lists $STYPE
-		;;
 	    *)
 		show_error_message "fatal"
 	esac
-	
 	;;
 
     "add" | "a")
 	
-	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
+	(( $# != 1 )) && show_error_message "$ACTION requires <tag>"
         # Append new entry
-	add_entry "$2"
+	add_entry "$1"
 	;;
 
     "import" | "im")
 	
-	[ $NARGS -ne 2 ] && show_error_message "$1 requires <file>"
+	(( $# != 1 )) && show_error_message "$ACTION requires <file>"
         # Append new entry
-	import_entries "$2"
+	import_entries "$1"
 	;;
     
     "delete" | "d")
 
-	[ $NARGS -ne 2 ] && show_error_message "$1 requires <tag>"
-	delete_entry "$2"
+	(( $# != 1 )) && show_error_message "$ACTION requires <tag>"
+	delete_entry "$1"
 	;;
 
     "status" | "st")
-	(( $NARGS != 3 )) && show_error_message "$1 requires <status> <tag>"
+	(( $# != 2 )) && show_error_message "$ACTION requires <status> <tag>"
 
-	STATUS_SYMB=$2
-	TAG=$3
+	STATUS_SYMB=$1
+	TAG=$2
     
 	case $STATUS_SYMB in
             "n"|"N")
@@ -1451,7 +1477,7 @@ case $ACTION in
             "i"|"I")
 		STATUS="(I)"
 		;;
-        "c"|"C")
+            "c"|"C")
 		STATUS="(C)"
 		;;
             *)
@@ -1468,24 +1494,22 @@ case $ACTION in
 
     "flag" | "f")
 
-	(( $NARGS != 2 )) && show_error_message "$1 requires <tag-spec>"
-    
-	TAG_SPEC=$2
-	toggle_important_flag "$TAG_SPEC"
-
+	(( $# != 1 )) && show_error_message "$ACTION requires <tag-spec>"   
+	toggle_important_flag "$1"
+	
 	;;
 
     "edit" | "e")
      
         # Edit entry
-	(( $NARGS == 1 )) && show_error_message "$1 requires at least one option"
+	(( $# == 0 )) && show_error_message "$ACTION requires at least one option"
 
-	case $2 in
+	case $1 in
 
             "-m")
 
-		(( $NARGS != 3 )) && show_error_message "$1 $2 requires <tag>"
-		TAG=$3
+		(( $# != 2 )) && show_error_message "$ACTION $1 requires <tag>"
+		TAG=$2
 		modify_entry_statement "$TAG"
 		;;
 
@@ -1509,14 +1533,14 @@ case $ACTION in
 
     "search" | "se")
 
-	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
-	ENTRIES="$(search_entries "$2")"
+	(( $# != 1 )) && show_error_message "$ACTION requires search phrase"
+	ENTRIES="$(search_entries "$1")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
 
     "purge" | "p")
 	
-	[ $NARGS -ne 1 ] && show_error_message "$1 takes no arguments"
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
         # Purge all entries with status complete
 	purge_completed_entries
 	;;
@@ -1524,7 +1548,7 @@ case $ACTION in
     "lists" | "l")
 
         # Show available lists
-	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
 	ENTRIES="$(show_available_lists)"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
@@ -1532,20 +1556,20 @@ case $ACTION in
     "deletelist" | "dl")
 
         # Delete specified list
-	(( $NARGS != 2 )) && show_error_message "$1 requires <list>"
-	delete_list "$2"
+	(( $# != 1 )) && show_error_message "$ACTION requires <list>"
+	delete_list "$1"
 	;;
 
     "searchlists" | "sel")
 	
-	(( $NARGS != 2 )) && show_error_message "$1 requires search phrase"
-	ENTRIES="$(search_entries_all_lists "$2")"
+	(( $# != 1 )) && show_error_message "$ACTION requires search phrase"
+	ENTRIES="$(search_entries_all_lists "$1")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
     
     "purgelists" | "pl")
 	
-	(( $NARGS != 1 )) && show_error_message "$1 takes no arguments"
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
         # Purge all entries with status complete
 	purge_completed_entries_all_lists
 	;;
