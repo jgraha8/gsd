@@ -1,4 +1,6 @@
-Copyright (C) 2011, 2012 Jason Graham <jgraha8@gmail.com> 
+Copyright (C) 2011-2012 Jason Graham <jgraha8@gmail.com>
+Copyright (C) 2018 Jason Graham <jgraham@compukix.net>
+
 See the end of the file for license conditions.
 
 =====================================================================
@@ -18,8 +20,8 @@ lists. It provides basic functionality such as:
 
    * Flagging items that are most important
 
-   * Viewing and printing items for a given status to see all
-     completed tasks, all new tasks, etc.
+   * Viewing, printing, and emailing items for a given status to see
+     all completed tasks, all new tasks, etc.
 
    * Searching for entry items in a specified list or all lists
 
@@ -37,6 +39,7 @@ requirements are:
    * grep
    * sed
    * lpr (for printing support)
+   * mail (for email support)
 
 
 =====================================================================
@@ -48,21 +51,26 @@ easiest what to see what does what is to run:
 
     gsd help
 
-from the command line. 
+from the command line.
+
+----------------------------------------------------------------------
+			  SETUP CONFIG FILE
+----------------------------------------------------------------------
+
+The gsd source comes with a sample config file (config.sample) that
+may be placed in the gsd directory (default is GSDDIR=~/.gsd).
+gsd will look for $GSDDIR/config when executed.
 
 gsd provides colored output when displaying to the terminal. The
-colors are configured by default to be suitable for white or light
-colored terminal backgrounds. If you use a dark background for your
-terminal you may want to change the default color configuration by
-opening with your favorite text editor the file "gsd" and changing the
-line
+colors are configured by default to be suitable for dark terminal
+backgrounds. If you are using a white/light colored background, then
+you may want to set:
 
     DARK_BACKGROUND="no"
 
-to
+in the config file. 
 
-    DARK_BACKGROUND="yes"
-
+Please refer the the config file for the other settings.
 
 =====================================================================
                                TUTORIAL
@@ -102,7 +110,7 @@ if toggled on.
 Since you are on the way to learning gsd, go ahead and change the
 status of the first item with:
 
-    gsd status I 1
+    gsd status I 1     # (or gsd status i 1)
 
 Showing the entries again shows that the status was updated to "(I)"
 for "in progress/incomplete". To look at only the new items run:
@@ -117,15 +125,19 @@ In some instances it is useful to flag some items to be important so
 they recieve the immediate attention. An important flag "(*)" may be
 toggled by using
 
-    gsd flag <tag>
+    gsd flag <tag-spec>
 
-Doing this for item 2 in list we get:
+Doing this for item 2 & 3 we use:
+
+    gsd flag 2-3   # or gsd flag 2,3
+
+to get:
 
     1 (I): Learn how to use gsd
 
     2 (N): (*) Wash the dishes
 
-    3 (N): Walk the dog
+    3 (N): (*) Walk the dog
 
 from "gsd show". To unmark the item, just toggle it off with the same
 command. If you have a lot of items, you can tag the most important
@@ -169,7 +181,7 @@ to get:
 
     1 (I): Learn how to use gsd
 
-    3 (N): Walk the dog
+    3 (N): (*) Walk the dog
 
 from "gsd show". Notice the tag numbers are 1 and 3, not 1 and
 2. Although not necessary, it may be of convenience to put the tags in
@@ -181,10 +193,23 @@ to get:
 
     1 (I): Learn how to use gsd
 
-    2 (N): Walk the dog
+    2 (N): (*) Walk the dog
 
 from "gsd show".
 
+We may also edit an entry message with:
+
+    gsd edit -m 2
+
+which will open an editor for editing (see "SETUP CONFIG FILE" above
+for changing which editor is used). For our example list, we may
+change "Walk the dog" to "Walk the dog and cat" to get:
+
+    1 (I): Learn how to use gsd
+
+    2 (N): (*) Walk the dog and cat
+
+from "gsd show".
 
 ----------------------------------------------------------------------
                           WORKING WITH LISTS
@@ -247,21 +272,31 @@ Other list functions are "searchlists" - search entries for specified
 text, "purgelists" - purge the complete items from all lists, and
 "printlist" - print all lists are available.
 
+
+----------------------------------------------------------------------
+                        USING COMMAND SHORTCUTS
+----------------------------------------------------------------------
+
+To make things a bit quicker and easier to use, each command has a
+shortcut which can be used in place of the full command. For instance,
+to add an entry to the default list we can specify:
+
+    gsd a "My new entry"
+
+Another example is to show all flagged entries in all lists:
+
+    gsd sl -f
+
+The command "gsd info" or "gsd i" will show the shortcuts for each
+command. Use "gsd help" or "gsd h" to see the help menu.
+
+
 Well, that should hopefully be enough to get you started. Remember to
 always refer to "gsd help" if you get stuck.
 
 Enjoy.
 
 
-=====================================================================
-                           GENERAL COMMENTS
-=====================================================================
-
- * Also after starting and finishing the first major part of this
-   project, it was realized that numerous utilities similar to this
-   one exist online. Up until now, no parts of this program have been
-   borrowed from any others; if at any point parts are borrowed it
-   will be noted here in this file.
 
 
 This file is part of gsd
