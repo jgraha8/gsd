@@ -27,7 +27,6 @@ SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
 GSDLIST="default"
 GSDVERSION="0.30"
-GSD_EDITOR=${EDITOR:-vim}
 
 # Attribute codes:
 # 00=none 01=bold 04=underscore 05=blink 07=reverse 08=concealed
@@ -769,7 +768,7 @@ function modify_entry_statement {
     # Create tmp file with old statement and open
     show_entry_statement "$_line" > $GSDFILE-entry${_tag}.tmp
 
-    $GSD_EDITOR $GSDFILE-entry${_tag}.tmp
+    $EDITOR $GSDFILE-entry${_tag}.tmp
     _statement=$(cat $GSDFILE-entry${_tag}.tmp)
     rm -f $GSDFILE-entry${_tag}.tmp
 
@@ -1332,6 +1331,7 @@ fi
 
 DARK_BACKGROUND=${DARK_BACKGROUND:-yes}
 MAIL_RECIPIENT=${MAIL_RECIPIENT:-"${USER}@localhost"}
+EDITOR=${EDITOR:-vim}
 
 # Specify colors for new, incomplete, completed and flagged Besure to
 # use the ANSI code \033 and not the escape character \e to support
