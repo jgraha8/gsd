@@ -74,6 +74,7 @@ function show_usage_message {
     echo "Usage: $SCRIPTNAME [options] <command> [args]"
     echo ""
     echo "Options:"
+    echo "  -c <file>                   Specify which gsd config file to use (default: \$HOME/.gsd/config)"        
     echo "  -d <dir>                    Specify which gsd directory to use (default: \$HOME/.gsd)"    
     echo "  -l <list>                   Specify which list to use (default: default)"
     echo " "
@@ -1303,7 +1304,14 @@ function set_stype {
 # Process options
 while [[ $1 == "-"* ]]
 do
+    (( $# < 2 )) && show_error_message "option $1 requires an argument"
+    
     case $1 in
+	"-c")
+	    GSDCONFIG="$2"
+	    [ ! -f $GSDCONFIG ] && show_error_message "unable to find $GSDCONFIG"
+	    shift 2
+	    ;;
 	"-d")
 	    GSDDIR="$2"
 	    shift 2
@@ -1317,6 +1325,8 @@ do
             ;;
     esac
 done
+
+GSDCONFIG=${GSDCONFIG:-"$GSDDIR/config"}
 GSDFILE="$GSDDIR/$GSDLIST.lst"
 
 # First check that the GSD file exists and is readable
@@ -1325,8 +1335,8 @@ if [ ! -d $GSDDIR ]; then
     [ $? -ne 0 ] && show_error_message "unable to create $GSDDIR"
 fi
 
-if [ -f $GSDDIR/config ]; then
-    . $GSDDIR/config
+if [ -f $GSDCONFIG ]; then
+    . $GSDCONFIG
 fi
 
 DARK_BACKGROUND=${DARK_BACKGROUND:-yes}
