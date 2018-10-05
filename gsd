@@ -97,6 +97,7 @@ function show_usage_message {
     echo "      -m                      Change entry statement"
     echo "      -r                      Reorder entry tags"
     echo "  se, search <phrase>         Perform text search on entries"
+    echo "  b, bump <tag a> <tag b>     Move entry at tag a to tag b"
     echo "  p, purge                    Remove all completed entries"
     echo "  pr, print                   Send list entries to printer"
     echo "    Options:"
@@ -1001,6 +1002,50 @@ function reorder_entry_tags {
 
 }
 
+#-------------------------------------------------------------------                                                                                                        # BUMP_ENTRY
+#-------------------------------------------------------------------                                                                                                        
+
+function bump_entry {
+
+# This function repositions ("bumps") the entry at tag a to
+# new position at tag b.
+
+local _a   # tag to move
+local _b   # tag to move to
+local _fin # final tag in list
+
+rm -f $GSDFILE.tmp
+touch $GSDFILE.tmp
+[ $? -ne 0 ] && show_error_message "cannot create temporary file"
+
+rm -f $GSDFILE.bak
+cp $GSDFILE $GSDFILE.bak
+
+_a=$1
+_b=$2
+_fin=$(tail -n 1 $GSDFILE.bak | grep -o -E '[0-9]+')
+sed -i.tmp "$_a d" $GSDFILE.bak
+if [ "$_a" != "$_fin" ] && [ "$_b" != "1" ]; then
+  # grab first chunk of entries
+  awk -v var=$_b 'NR==1,NR==((var-1))' $GSDFILE.bak >> $GSDFILE.tmp
+fi
+# grab entry to move
+awk -v var=$_a 'NR==var' $GSDFILE >> $GSDFILE.tmp
+# grab last chunk of entries
+awk -v vara=$_b -v varb=$_fin 'NR==((vara)),NR==varb' $GSDFILE.bak >> $GSDFILE.tmp
+
+# clean up
+cp $GSDFILE.tmp $GSDFILE
+rm -f $GSDFILE.tmp
+rm -f $GSDFILE.bak
+
+# re-sequence the tags since they have been shuffled
+reorder_entry_tags
+
+return 0
+
+}
+
 #-------------------------------------------------------------------
 # TOGGLE_IMPORTANT_FLAG
 #--------------------------------------------------------------------
@@ -1548,6 +1593,13 @@ case $ACTION in
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
 
+    "bump" | "b")
+	
+	(( $# != 2 )) && show_error_message "$ACTION requires two arguments"
+        # Bump entry at tag a to tag b
+	bump_entry "$1" "$2"
+	;;
+    
     "purge" | "p")
 	
 	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
