@@ -111,6 +111,9 @@ function show_usage_message {
     echo "      -i                      Email only entries with status incomplete"
     echo "      -c                      Email only entries with status complete"
     echo "      -f                      Email only flagged entries"
+    echo "  ac, activate <list>         Activate a specified list"
+    echo "  de, deactivate              Deactivate current active list"    
+    echo "  sa, showactive              Show active list"
     echo "  l, lists                    Show which lists are available"
     echo "  dl, deletelist <list>       Delete list"
     echo "  sl, showlists               Show entries in all lists"
@@ -211,7 +214,11 @@ function show_entry_divider {
 
 function show_working_list {
 
-    _list=$(basename "$GSDFILE")
+    _fname="$GSDFILE"
+    if [ -L "$GSDFILE" ]; then
+	_fname=$(readlink "$GSDFILE")
+    fi
+    _list=$(basename "$_fname")
     _list=${_list%.*}
 
     echo -e "LIST: ${COLOR_LIST}$_list${COLOR_END}"
@@ -1164,7 +1171,8 @@ function show_available_lists {
 
     for _list in `ls $GSDDIR/*.lst 2> /dev/null`
     do
-        _list=`basename "$_list"`
+	[[ "$(basename $_list)" == "active.lst" ]] && continue;
+        _list=$(basename "$_list")
         echo ${_list%.*}
     done
 
@@ -1346,6 +1354,8 @@ function set_stype {
 # MAIN
 #####################################################################
 
+list_specified=0
+
 # Process options
 while [[ $1 == "-"* ]]
 do
@@ -1362,6 +1372,7 @@ do
 	    shift 2
 	    ;;
 	"-l")
+	    list_specified=1
 	    GSDLIST="$2"
 	    shift 2
 	    ;;
@@ -1436,6 +1447,11 @@ esac
 if [ ! -f $GSDFILE ]; then
     touch "$GSDFILE"
     [ $? -ne 0 ] && show_error_message "unable to create $GSDFILE"
+fi
+
+# Check if we have an activated list without the -l
+if (( list_specified == 0 )) && [ -f "$GSDDIR/active.lst" ]; then
+    GSDFILE="$(readlink $GSDDIR/active.lst)"
 fi
 
 case $ACTION in
@@ -1606,6 +1622,32 @@ case $ACTION in
         # Purge all entries with status complete
 	purge_completed_entries
 	;;
+
+    "activate" | "ac")
+	(( $# != 1 )) && show_error_message "$ACTION requires <list>"
+
+	_list=$1
+	touch "$GSDDIR/${_list}.lst"
+	[ ! -f "$GSDDIR/${_list}.lst" ] && show_error_message "provided list $GSDDIR/${_list}.lst does not exist"
+	ln -sf $GSDDIR/${_list}.lst $GSDDIR/active.lst
+	;;
+
+    "deactivate" | "de")
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+
+	rm -f "$GSDDIR/active.lst"
+	;;
+    
+    "showactive" | "sa")
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+
+	if [ -f "$GSDDIR/active.lst" ]; then
+	    _fname=$(readlink "$GSDFILE")
+	    _list=$(basename "$_fname")
+	    echo "${_list%.*}"
+	fi
+	;;
+    
 
     "lists" | "l")
 
