@@ -92,9 +92,9 @@ function show_usage_message {
     echo "  d, delete <tag>             Delete entry"
     echo "  st, status {N|I|C} <tag>    Change status of entry (status setting is case insensitive)"
     echo "  f, flag <tag-spec>          Toggle important flag (ex. tag-spec: 2-5,7,9-10)"
-    echo "  e, edit                     Edit entry in list"
+    echo "  e, edit <option>            Edit entry in list"
     echo "    Options:"
-    echo "      -m                      Change entry statement"
+    echo "      -m <tag>                Change entry statement"
     echo "      -r                      Reorder entry tags"
     echo "  se, search <phrase>         Perform text search on entries"
     echo "  b, bump <tag a> <tag b>     Move entry at tag a to tag b"
@@ -1642,7 +1642,7 @@ case $ACTION in
 	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
 
 	if [ -f "$GSDDIR/active.lst" ]; then
-	    _fname=$(readlink "$GSDFILE")
+	    _fname=$(readlink "$GSDDIR/active.lst")
 	    _list=$(basename "$_fname")
 	    echo "${_list%.*}"
 	fi
