@@ -23,6 +23,8 @@
 #
 ############################################################################
 
+set -o pipefail
+
 SCRIPTNAME=`basename "$0"`
 GSDDIR="$HOME/.gsd"
 GSDLIST="default"
@@ -50,6 +52,10 @@ CYAN="01;36"
 COLOR_FLAG="\033[${RED}m"
 COLOR_LIST="\033[${BLUE}m"
 COLOR_END="\033[0m"
+
+STATUS_NEW="(N)"
+STATUS_INCOMPLETE="(I)"
+STATUS_COMPLETE="(C)"
 
 # OS check
 OSNAME=`uname`
@@ -103,6 +109,7 @@ Commands:
   se, search <phrase>                  Perform text search on entries
   b, bump <tag a> <tag b>              Move entry at tag a to tag b
   p, purge                             Remove all completed entries
+  ar, archive                          Move all completed entries to the ARCHIVE list
   pr, print [options]                  Send list entries to printer
     Options:
       -n                               Print only entries with status new
@@ -161,6 +168,7 @@ The most commonly used $SCRIPTNAME commands are:
   e, edit                   Edit entry in list
   se, search                Perform text search on entries
   p, purge                  Remove all completed entries
+  ar, archive               Move all completed entries to the ARCHIVE list
   pr, print                 Send list entries to printer
   m, mail                   Email list entries
   l, lists                  Show which lists are available
@@ -306,7 +314,7 @@ function sed_write_line {
 
     sed -i.tmp "$_linenumber c$_line" $_file
 
-    [ $? -ne 0 ] && print_error_message "unable to write line"
+    [ $? -ne 0 ] && show_error_message "unable to write line"
 
     return 0
 
@@ -326,7 +334,7 @@ function sed_write_line_bsd {
     $_line\\
     " $_file
 
-    [ $? -ne 0 ] && print_error_message "unable to write line"
+    [ $? -ne 0 ] && show_error_message "unable to write line"
 
     return 0
 
@@ -981,6 +989,7 @@ function purge_completed_entries {
                 rm -f $GSDFILE.tmp
             fi
 
+            _statement=$(show_entry_statement "$_line")
         fi
 
     done
@@ -988,6 +997,60 @@ function purge_completed_entries {
     return 0
 
 }
+
+function archive_completed_entries {
+
+    local _ltype
+    local _line
+    local orig_gsdfile="$GSDFILE"
+
+    GSDFILE="$ARCHIVE_FILE"
+
+    # Get all suspicious lines; notice the sort -nr at the end - we
+    # must delete them in reverse order otherwise we'll delete the
+    # wrong lines since things are shifted upwards after a delete
+    for _linenumber in `grep -n ":(C):" $orig_gsdfile | cut -f1 -d: | sort -nr`
+    do
+        # Read the line
+        _line=$(sed -n ${_linenumber}p $orig_gsdfile)
+
+        check_line_type "$_line"
+        _ltype=$?
+
+        # Make sure its a valid entry and has status complete
+        if [ $_ltype -eq 3 -o $_ltype -eq 39 ]; then
+
+            # Delete the entry in the gsd file
+            sed -i.tmp "$_linenumber d" $orig_gsdfile
+
+            if [ $? -ne 0 ]; then
+                cp $orig_gsdfile.tmp $orig_gsdfile
+                show_error_message "could not delete entry"
+            else
+                rm -f $orig_gsdfile.tmp
+            fi
+
+	    # Add entry and get new tag from output message
+            local _tag=$(add_entry "$(show_entry_statement "$_line")" | sed -E 's/.*\ ([0-9]+)$/\1/g')
+
+	    rc=$?
+	    if [ $rc -eq 0 ] && [ ! -z "$_tag" ]; then
+		modify_entry_status "$STATUS_COMPLETE" $_tag
+	    else
+		show_error_message "unable to archive entry at line $_linenumber in $orig_gsdfile"
+		exit 1
+	    fi
+
+        fi
+
+    done
+
+    GSDFILE="$orig_gsdfile"
+
+    return 0
+
+}
+
 
 #-------------------------------------------------------------------
 # REORDER_ENTRY_TAGS
@@ -1213,9 +1276,11 @@ function show_available_lists {
 
     for _list in `ls $GSDDIR/*.lst 2> /dev/null`
     do
-	[[ "$(basename $_list)" == "active.lst" ]] && continue;
-        _list=$(basename "$_list")
-        echo ${_list%.*}
+	local _lst_file="$(basename $_list)"
+	if [ "$_lst_file" = "$ACTIVE_LST" ] || [ "$_lst_file" = "$ARCHIVE_LST" ]; then
+	    continue;
+	fi
+        echo "${_lst_file%.*}"
     done
 
     return 0
@@ -1445,6 +1510,10 @@ done
 
 GSDCONFIG=${GSDCONFIG:-"$GSDDIR/config"}
 GSDFILE="$GSDDIR/$GSDLIST.lst"
+ACTIVE_LST="${ACTIVE_LST:-ACTIVE.lst}"
+ACTIVE_FILE="$GSDDIR/$ACTIVE_LST"
+ARCHIVE_LST="${ARCHIVE_LST:-ARCHIVE.lst}"
+ARCHIVE_FILE="$GSDDIR/$ARCHIVE_LST"
 
 # First check that the GSD file exists and is readable
 if [ ! -d $GSDDIR ]; then
@@ -1462,6 +1531,8 @@ fi
 DARK_BACKGROUND=${DARK_BACKGROUND:-yes}
 MAIL_RECIPIENT=${MAIL_RECIPIENT:-"${USER}@localhost"}
 EDITOR=${EDITOR:-vim}
+
+
 
 # Specify colors for new, incomplete, completed and flagged Besure to
 # use the ANSI code \033 and not the escape character \e to support
@@ -1507,6 +1578,10 @@ esac
 #
 # Perform pre-action item tasks
 #
+if [ ! -f "$ARCHIVE_FILE" ]; then
+    touch "$ARCHIVE_FILE"
+    [ $? -ne 0 ] && show_error_message "unable to create $ARCHIVE_FILE"
+fi
 # Check if list exist; if not create it
 if [ ! -f $GSDFILE ]; then
     touch "$GSDFILE"
@@ -1517,8 +1592,8 @@ if [ ! -f $GSDFILE ]; then
 fi
 
 # Check if we have an activated list without the -l
-if (( list_specified == 0 )) && [ -f "$GSDDIR/active.lst" ]; then
-    GSDFILE="$(readlink $GSDDIR/active.lst)"
+if (( list_specified == 0 )) && [ -f "$GSDDIR/$ACTIVE_LST" ]; then
+    GSDFILE="$(readlink $GSDDIR/$ACTIVE_LST)"
 fi
 
 case $ACTION in
@@ -1670,13 +1745,13 @@ case $ACTION in
 
 	case $STATUS_SYMB in
             "n"|"N")
-		STATUS="(N)"
+		STATUS="$STATUS_NEW"
 		;;
             "i"|"I")
-		STATUS="(I)"
+		STATUS="$STATUS_INCOMPLETE"
 		;;
             "c"|"C")
-		STATUS="(C)"
+		STATUS="$STATUS_COMPLETE"
 		;;
             *)
 		show_error_message "status not specified correctly"
@@ -1770,31 +1845,37 @@ case $ACTION in
 	purge_completed_entries
 	;;
 
+    "archive" | "ar")
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+        # Purge all entries with status complete
+	archive_completed_entries
+	;;
+
     "activate" | "ac")
 	(( $# != 1 )) && show_error_message "$ACTION requires <list>"
 
 	_list=$1
 	touch "$GSDDIR/${_list}.lst"
 	[ ! -f "$GSDDIR/${_list}.lst" ] && show_error_message "provided list $GSDDIR/${_list}.lst does not exist"
-	ln -sf $GSDDIR/${_list}.lst $GSDDIR/active.lst
+	ln -sf $GSDDIR/${_list}.lst $GSDDIR/$ACTIVE_LST
 	;;
 
     "deactivate" | "de")
 	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
 
-	rm -f "$GSDDIR/active.lst"
+	rm -f "$GSDDIR/$ACTIVE_LST"
 	;;
-    
+
     "showactive" | "sa")
 	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
 
-	if [ -f "$GSDDIR/active.lst" ]; then
-	    _fname=$(readlink "$GSDDIR/active.lst")
+	if [ -f "$GSDDIR/$ACTIVE_LST" ]; then
+	    _fname=$(readlink "$GSDDIR/$ACTIVE_LST")
 	    _list=$(basename "$_fname")
 	    echo "${_list%.*}"
 	fi
 	;;
-    
+
 
     "lists" | "l")
 
