@@ -135,6 +135,7 @@ Commands:
       -f                               Show only flagged entries
   sel, searchlists <phrase>            Search specified phrase in all lists
   pl, purgelists                       Remove all completed entries in all lists
+  arl, archivelists                    Move all completed entries to the ARCHIVE list for all lists
   prl, printlists [options]            Send entries in all lists to printer
     Options:
       -n                               Print only entries with status new
@@ -176,6 +177,7 @@ The most commonly used $SCRIPTNAME commands are:
   sl, showlists             Show entries in all lists
   sel, searchlists          Search phrase in all lists
   pl, purgelists            Remove all completed entries in all lists
+  arl, archivelists         Move all completed entries to the ARCHIVE list for all lists
   prl, printlists           Send entries in all lists to printer 
   ml, maillists             Email entries in all lists
   v, version                Show version information
@@ -1370,6 +1372,25 @@ function purge_completed_entries_all_lists {
 }
 
 #-------------------------------------------------------------------
+# ARCHIVE_COMPLETED_ENTRIES_ALL_LISTS
+#--------------------------------------------------------------------
+
+function archive_completed_entries_all_lists {
+
+    local _list
+
+    # Get all available lists
+    for _list in `show_available_lists`
+    do
+        GSDFILE="${GSDDIR}/${_list}.lst"
+        archive_completed_entries
+    done
+
+    return 0
+
+}
+
+#-------------------------------------------------------------------
 # ASCII_FORMAT_ENTRIES
 #--------------------------------------------------------------------
 
@@ -1915,6 +1936,13 @@ case $ACTION in
         # Purge all entries with status complete
 	purge_completed_entries_all_lists
 	;;
+
+    "archivelists" | "arl")
+	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+        # Purge all entries with status complete
+	archive_completed_entries_all_lists
+	;;
+
 
     *)
 	show_error_message "no action specified"
