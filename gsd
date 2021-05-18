@@ -71,73 +71,76 @@ fi
 #---------------------------------------------------------------------
 
 function show_usage_message {
-    echo "Usage: $SCRIPTNAME [options] <command> [args]"
-    echo ""
-    echo "Options:"
-    echo "  -c <file>                   Specify which gsd config file to use (default: \$HOME/.gsd/config)"        
-    echo "  -d <dir>                    Specify which gsd directory to use (default: \$HOME/.gsd)"    
-    echo "  -l <list>                   Specify which list to use (default: default)"
-    echo " "
-    echo "Commands:"
-    echo "  h, help                     Print this message"
-    echo "  i, info                     Show basic usage"
-    echo "  s, show                     Show entries in list"
-    echo "    Options:"
-    echo "      -n                      Show only entries with status new"
-    echo "      -i                      Show only entries with status incomplete"
-    echo "      -c                      Show only entries with status complete"
-    echo "      -f                      Show only flagged entries"
-    echo "  a, add <statement>          Add new entry"
-    echo "  im, import <file>           Import a file of new entries (one entry per line)"
-    echo "  d, delete <tag>             Delete entry"
-    echo "  st, status {N|I|C} <tag>    Change status of entry (status setting is case insensitive)"
-    echo "  f, flag <tag-spec>          Toggle important flag (ex. tag-spec: 2-5,7,9-10)"
-    echo "  e, edit <option>            Edit entry in list"
-    echo "    Options:"
-    echo "      -m <tag>                Change entry statement"
-    echo "      -r                      Reorder entry tags"
-    echo "  se, search <phrase>         Perform text search on entries"
-    echo "  b, bump <tag a> <tag b>     Move entry at tag a to tag b"
-    echo "  p, purge                    Remove all completed entries"
-    echo "  pr, print                   Send list entries to printer"
-    echo "    Options:"
-    echo "      -n                      Print only entries with status new"
-    echo "      -i                      Print only entries with status incomplete"
-    echo "      -c                      Print only entries with status complete"
-    echo "      -f                      Print only flagged entries"
-    echo "  m, mail [recp-list]         Email list entries"
-    echo "    Options:"
-    echo "      -n                      Email only entries with status new"
-    echo "      -i                      Email only entries with status incomplete"
-    echo "      -c                      Email only entries with status complete"
-    echo "      -f                      Email only flagged entries"
-    echo "  ac, activate <list>         Activate a specified list"
-    echo "  de, deactivate              Deactivate current active list"    
-    echo "  sa, showactive              Show active list"
-    echo "  l, lists                    Show which lists are available"
-    echo "  dl, deletelist <list>       Delete list"
-    echo "  sl, showlists               Show entries in all lists"
-    echo "    Options:"
-    echo "      -n                      Show only entries with status new"
-    echo "      -i                      Show only entries with status incomplete"
-    echo "      -c                      Show only entries with status complete"
-    echo "      -f                      Show only flagged entries"
-    echo "  sel, searchlists <phrase>   Search specified phrase in all lists"
-    echo "  pl, purgelists              Remove all completed entries in all lists"
-    echo "  prl, printlists             Send entries in all lists to printer "
-    echo "    Options:"
-    echo "      -n                      Print only entries with status new"
-    echo "      -i                      Print only entries with status incomplete"
-    echo "      -c                      Print only entries with status complete"
-    echo "      -f                      Print only flagged entries"
-    echo "  ml, maillists [recp-list]   Email entries in all lists"
-    echo "    Options:"
-    echo "      -n                      Email only entries with status new"
-    echo "      -i                      Email only entries with status incomplete"
-    echo "      -c                      Email only entries with status complete"
-    echo "      -f                      Email only flagged entries"
-    echo "  v, version                  Show version information"
-    exit 0
+    echo "Usage: $SCRIPTNAME [options] <command> [args]
+
+Options:
+  -c <file>                           Specify which gsd config file to use (default: $HOME/.gsd/config)
+  -d <dir>                            Specify which gsd directory to use (default: $HOME/.gsd)
+  -l <list>                           Specify which list to use (default: default)
+
+Commands:
+  h, help                              Print this message
+  i, info                              Show basic usage
+  s, show [options]                    Show entries in list
+    Options:
+      -n                               Show only entries with status new
+      -i                               Show only entries with status incomplete
+      -c                               Show only entries with status complete
+      -f                               Show only flagged entries
+  a, add [options] <statement>         Add new entry
+    Options:
+      -d                               Prepend the current date to the entry statement
+  im, import [options] <file>          Import a file of new entries (one entry per line)
+    Options:
+      -d                               Prepend the current date to the entry statement
+  d, delete <tag>                      Delete entry
+  st, status {N|I|C} <tag>             Change status of entry (status setting is case insensitive)
+  f, flag <tag-spec>                   Toggle important flag (ex. tag-spec: 2-5,7,9-10)
+  e, edit [options]                    Edit entry in list
+    Options:
+      -m                               Change entry statement
+      -r                               Reorder entry tags
+  se, search <phrase>                  Perform text search on entries
+  b, bump <tag a> <tag b>              Move entry at tag a to tag b
+  p, purge                             Remove all completed entries
+  pr, print [options]                  Send list entries to printer
+    Options:
+      -n                               Print only entries with status new
+      -i                               Print only entries with status incomplete
+      -c                               Print only entries with status complete
+      -f                               Print only flagged entries
+  m, mail [options] [recp-list]        Email list entries
+    Options:
+      -n                               Email only entries with status new
+      -i                               Email only entries with status incomplete
+      -c                               Email only entries with status complete
+      -f                               Email only flagged entries
+  ac, activate <list>                  Activate a specified list
+  de, deactivate                       Deactivate current active list
+  sa, showactive                       Show active list
+  l, lists                             Show which lists are available
+  dl, deletelist <list>                Delete list
+  sl, showlists [options]              Show entries in all lists
+    Options:
+      -n                               Show only entries with status new
+      -i                               Show only entries with status incomplete
+      -c                               Show only entries with status complete
+      -f                               Show only flagged entries
+  sel, searchlists <phrase>            Search specified phrase in all lists
+  pl, purgelists                       Remove all completed entries in all lists
+  prl, printlists [options]            Send entries in all lists to printer
+    Options:
+      -n                               Print only entries with status new
+      -i                               Print only entries with status incomplete
+      -c                               Print only entries with status complete
+      -f                               Print only flagged entries
+  ml, maillists [options] [recp-list]  Email entries in all lists
+    Options:
+      -n                               Email only entries with status new
+      -i                               Email only entries with status incomplete
+      -c                               Email only entries with status complete
+      -f                               Email only flagged entries
+  v, version                           Show version information"
 }
 
 #---------------------------------------------------------------------
@@ -145,33 +148,31 @@ function show_usage_message {
 #---------------------------------------------------------------------
 
 function show_info_message {
-    echo "Usage: $SCRIPTNAME [options] <command> [args]"
-    echo ""
-    echo "The most commonly used $SCRIPTNAME commands are:"
-    echo "  h, help                   Print extended help message"
-    echo "  i, info                   Print this message"
-    echo "  s, show                   Show entries in list"
-    echo "  a, add                    Add new entry"
-    echo "  im, import                Import a file of new entries (one entry per line)"    
-    echo "  d, delete                 Delete entry"
-    echo "  st, status                Change status of entry"
-    echo "  f, flag                   Toggle important flag"
-    echo "  e, edit                   Edit entry in list"
-    echo "  se, search                Perform text search on entries"
-    echo "  p, purge                  Remove all completed entries"
-    echo "  pr, print                 Send list entries to printer"
-    echo "  m, mail                   Email list entries"    
-    echo "  l, lists                  Show which lists are available"
-    echo "  dl, deletelist            Delete list"
-    echo "  sl, showlists             Show entries in all lists"
-    echo "  sel, searchlists          Search phrase in all lists"
-    echo "  pl, purgelists            Remove all completed entries in all lists"
-    echo "  prl, printlists           Send entries in all lists to printer "
-    echo "  ml, maillists             Email entries in all lists"    
-    echo "  v, version                Show version information"
-    echo ""
-    echo "See '$SCRIPTNAME help' for more information."
-    exit 0
+    echo "Usage: $SCRIPTNAME [options] <command> [args]
+The most commonly used $SCRIPTNAME commands are:
+  h, help                   Print extended help message
+  i, info                   Print this message
+  s, show                   Show entries in list
+  a, add                    Add new entry
+  im, import                Import a file of new entries (one entry per line)
+  d, delete                 Delete entry
+  st, status                Change status of entry
+  f, flag                   Toggle important flag
+  e, edit                   Edit entry in list
+  se, search                Perform text search on entries
+  p, purge                  Remove all completed entries
+  pr, print                 Send list entries to printer
+  m, mail                   Email list entries
+  l, lists                  Show which lists are available
+  dl, deletelist            Delete list
+  sl, showlists             Show entries in all lists
+  sel, searchlists          Search phrase in all lists
+  pl, purgelists            Remove all completed entries in all lists
+  prl, printlists           Send entries in all lists to printer 
+  ml, maillists             Email entries in all lists
+  v, version                Show version information
+
+See '$SCRIPTNAME help' for more information."
 }
 
 #---------------------------------------------------------------------
@@ -180,7 +181,6 @@ function show_info_message {
 
 function show_version {
     echo "$SCRIPTNAME: version $GSDVERSION"
-    exit 0
 }
 
 #---------------------------------------------------------------------
@@ -188,8 +188,7 @@ function show_version {
 #---------------------------------------------------------------------
 
 function show_error_message {
-    echo "$SCRIPTNAME: $1"
-    exit -1
+    echo "$SCRIPTNAME: $1" 1>&2
 }
 
 #---------------------------------------------------------------------
@@ -269,6 +268,7 @@ function show_entry {
             ;;
         *)
             show_error_message "incorrect entry type"
+	    exit 1
             ;;
     esac
 
@@ -478,6 +478,7 @@ function check_line_type {
             ;;
         *)
             show_error_message "line in list not formatted correctly"
+	    exit 1
     esac
 
     check_important_flag "$_line"
@@ -525,6 +526,7 @@ function get_entry_line_number {
 
     # Should have returned by now
     show_error_message "specified tag not found"
+    exit 1
 
 }
 
@@ -538,7 +540,11 @@ function show_last_entry_tag {
     local _ltype
     local _line
 
-    rm -f "$_gsdfile_rev" || show_error_message "unable to cleanup: check $GSDDIR permissions"
+    rm -f "$_gsdfile_rev"
+    if [ $? -ne 0 ]; then
+	show_error_message "unable to cleanup: check $GSDDIR permissions"
+	exit 1
+    fi
 
     # Create reversed list
     cat "${GSDFILE}" | sort -nr >> "$_gsdfile_rev"
@@ -556,9 +562,11 @@ function show_last_entry_tag {
                 echo $(show_entry_tag "$_line")
                 rm -f "$_gsdfile_rev" && return 0
                 show_error_message "unable to cleanup: check $GSDDIR permissions"
+		exit 1
                 ;;
             *)
                 show_error_message "error on read"
+		exit 1
                 ;;
         esac
 
@@ -569,6 +577,7 @@ function show_last_entry_tag {
 
     rm -f "$_gsdfile_rev" && return 0
     show_error_message "unable to clean up: check $GSDDIR permissions"
+    exit 1
 
 }
 
@@ -668,7 +677,10 @@ function ascii_format_entries {
     # Send to printer; requires $PRINTER to be set
     show_entries $_stype > $_output
 
-    [ $? -ne 0 ] && show_error_message "unable to format entries"
+    if [ $? -ne 0 ]; then
+	show_error_message "unable to format entries"
+	exit 1
+    fi
 
     return 0
 
@@ -681,14 +693,17 @@ function ascii_format_entries {
 
 function print_entries {
     local _stype=$1
-    
+
     ascii_format_entries $_stype $GSDDIR/.entries
-    
-    cat $GSDDIR/.entries | lpr -p    
+
+    cat $GSDDIR/.entries | lpr -p
     local rc=$?
     rm -f $GSDDIR/.entries
-    
-    [ $rc -ne 0 ] && show_error_message "unable to print"
+
+    if [ $rc -ne 0 ]; then
+	show_error_message "unable to print"
+	exit 1
+    fi
 
     return 0
 
@@ -701,14 +716,17 @@ function print_entries {
 function mail_entries {
 
     local _stype=$1
-    
+
     ascii_format_entries $_stype $GSDDIR/.entries
 
     mail -s "gsd: $(date)" "${MAIL_RECIPIENT}" < $GSDDIR/.entries
     local rc=$?
     rm -f $GSDDIR/.entries
-    
-    [ $rc -ne 0 ] && show_error_message "unable to mail to ${MAIL_RECIPIENT}"
+
+    if [ $rc -ne 0 ]; then
+	show_error_message "unable to mail to ${MAIL_RECIPIENT}"
+	exit 1
+    fi
 
     return 0
 
@@ -744,6 +762,7 @@ function modify_entry_status {
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
         show_error_message "could not update entry status"
+	exit 1
     else
         rm -f $GSDFILE.tmp
     fi
@@ -791,6 +810,7 @@ function modify_entry_statement {
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
         show_error_message "could not modify entry statement"
+	exit 1
     else
         rm -f $GSDFILE.tmp
     fi
@@ -806,8 +826,13 @@ function modify_entry_statement {
 function add_entry {
 
     local _statement="$1"
+    local -i _prepend_date=$2
     local _tag
 
+    if [ $_prepend_date -ne 0 ]; then
+	_statement="($(date +%Y-%m-%d)) $_statement"
+    fi
+    
     _tag=$(show_last_entry_tag)
     _tag=$((_tag+1))
     echo "$_tag:(N)::$_statement" >> $GSDFILE
@@ -817,6 +842,7 @@ function add_entry {
         return 0
     else
         show_error_message "unable to add new entry"
+	exit 1
     fi
 
 }
@@ -828,10 +854,14 @@ function add_entry {
 function import_entries {
 
     local _file="$1"
+    local -i _prepend_date=$2
 
     while read line
     do
-	add_entry "$line"
+	line="$(echo $line)"
+	if [ ! -z "$line" ]; then
+	    add_entry "$line" $_prepend_date
+	fi
     done<$_file
 
 }
@@ -858,6 +888,7 @@ function delete_entry {
     if [ $? -ne 0 ]; then
         cp $GSDFILE.tmp $GSDFILE
         show_error_message "could not delete entry"
+	exit 1
     else
         rm -f $GSDFILE.tmp
     fi
@@ -945,6 +976,7 @@ function purge_completed_entries {
             if [ $? -ne 0 ]; then
                 cp $GSDFILE.tmp $GSDFILE
                 show_error_message "could not delete entry"
+		exit 1
             else
                 rm -f $GSDFILE.tmp
             fi
@@ -978,7 +1010,10 @@ function reorder_entry_tags {
     rm -f $GSDFILE.tmp
     touch $GSDFILE.tmp
 
-    [ $? -ne 0 ] && show_error_message "cannot create temporary file"
+    if [ $? -ne 0 ]; then
+	show_error_message "cannot create temporary file"
+	exit 1
+    fi
 
     _tag=0
     while read _line; do
@@ -1010,7 +1045,7 @@ function reorder_entry_tags {
 }
 
 #-------------------------------------------------------------------                                                                                                        # BUMP_ENTRY
-#-------------------------------------------------------------------                                                                                                        
+#-------------------------------------------------------------------
 
 function bump_entry {
 
@@ -1023,7 +1058,10 @@ local _fin # final tag in list
 
 rm -f $GSDFILE.tmp
 touch $GSDFILE.tmp
-[ $? -ne 0 ] && show_error_message "cannot create temporary file"
+if [ $? -ne 0 ]; then
+    show_error_message "cannot create temporary file"
+    exit 1
+fi
 
 rm -f $GSDFILE.bak
 cp $GSDFILE $GSDFILE.bak
@@ -1067,7 +1105,7 @@ function toggle_important_flag {
     _state_crit=0
     if [ ! -z $_state ]; then
 	case $_state in
-	    "off") 
+	    "off")
 		_state_crit=11 # Must have current state on
 		;;
 	    "on")
@@ -1075,6 +1113,7 @@ function toggle_important_flag {
 		;;
 	    *)
 		show_error_message "toogle state not specified correctly"
+		exit 1
 		;;
 	esac
     fi
@@ -1095,12 +1134,13 @@ function toggle_important_flag {
 	local -i _tag_start;
 	local -i _tag_end;
 	local -i _tag
-	
+
 	if [[ $_tag_set == *"-"* ]]; then
 	    IFS='-' read -ra _tag_range <<< "$_tag_set"
 
 	    if (( ${#_tag_range[@]} != 2 )); then
 		show_error_message "tag range $_tag_set not specified correctly"
+		exit 1
 	    fi
 	    _tag_start=${_tag_range[0]}
 	    _tag_end=${_tag_range[1]}
@@ -1108,11 +1148,12 @@ function toggle_important_flag {
 	    _tag_start=$_tag_set
 	    _tag_end=$_tag_start
 	fi
-	
+
 	if (( _tag_end < _tag_start )); then
 	    show_error_message "tag range $_tag_set not specified correctly"
+	    exit 1
 	fi
-	
+
 	for (( _tag = $_tag_start; _tag <= $_tag_end; ++_tag ))
 	do
 	    get_entry_line_number "$_tag"
@@ -1134,7 +1175,7 @@ function toggle_important_flag {
 		# Add important tag
 	    else
 		# Not changing the entry
-		return 0 
+		return 0
 	    fi
 
 	    # Reconstruct the line
@@ -1147,12 +1188,13 @@ function toggle_important_flag {
 	    if [ $? -ne 0 ]; then
 		cp $GSDFILE.tmp $GSDFILE
 		show_error_message "could not toggle flag"
+		exit 1
 	    else
 		rm -f $GSDFILE.tmp
 	    fi
 	done
     done
-    
+
     return 0
 
 }
@@ -1186,10 +1228,11 @@ function show_available_lists {
 
 function delete_list {
 
-    local _gsdfile="${GSDDIR}/$1.lst"    
+    local _gsdfile="${GSDDIR}/$1.lst"
 
     if [ ! -f "$_gsdfile" ]; then
         show_error_message "specified list does not exisit"
+	exit 1
     else
         rm $_gsdfile
     fi
@@ -1282,7 +1325,10 @@ function ascii_format_entries_all_lists {
     # Send to printer; requires $PRINTER to be set
     show_entries_all_lists $_stype > $_output
 
-    [ $? -ne 0 ] && show_error_message "unable to format entries"
+    if [ $? -ne 0 ]; then
+	show_error_message "unable to format entries"
+	exit 1
+    fi
 
     return 0
 
@@ -1294,14 +1340,17 @@ function ascii_format_entries_all_lists {
 
 function print_entries_all_lists {
     local _stype=$1
-    
+
     ascii_format_entries_all_lists $_stype $GSDDIR/.entries
-    
-    cat $GSDDIR/.entries | lpr -p    
+
+    cat $GSDDIR/.entries | lpr -p
     local rc=$?
     rm -f $GSDDIR/.entries
-    
-    [ $rc -ne 0 ] && show_error_message "unable to print lists"
+
+    if [ $rc -ne 0 ]; then
+	show_error_message "unable to print lists"
+	exit 1
+    fi
 
     return 0
 
@@ -1314,14 +1363,17 @@ function print_entries_all_lists {
 function mail_entries_all_lists {
 
     local _stype=$1
-    
+
     ascii_format_entries_all_lists $_stype $GSDDIR/.entries
-    
+
     mail -s "gsd: $(date)" "${MAIL_RECIPIENT}" < $GSDDIR/.entries
     local rc=$?
     rm -f $GSDDIR/.entries
-    
-    [ $rc -ne 0 ] && show_error_message "unable to mail lists to ${MAIL_RECIPIENT}"
+
+    if [ $rc -ne 0 ]; then
+	show_error_message "unable to mail lists to ${MAIL_RECIPIENT}"
+	exit 1
+    fi
 
     return 0
 
@@ -1343,9 +1395,11 @@ function set_stype {
 	    ;;
 	"-h")
 	    show_usage_message
+	    exit 0
 	    ;;
 	*)
 	    show_error_message "incorrect option"
+	    exit 1
 	    ;;
     esac
 }
@@ -1359,12 +1413,18 @@ list_specified=0
 # Process options
 while [[ $1 == "-"* ]]
 do
-    (( $# < 2 )) && show_error_message "option $1 requires an argument"
-    
+    if (( $# < 2 )); then
+	show_error_message "option $1 requires an argument"
+	exit 1
+    fi
+
     case $1 in
 	"-c")
 	    GSDCONFIG="$2"
-	    [ ! -f $GSDCONFIG ] && show_error_message "unable to find $GSDCONFIG"
+	    if [ ! -f $GSDCONFIG ]; then
+		show_error_message "unable to find $GSDCONFIG"
+		exit 1
+	    fi
 	    shift 2
 	    ;;
 	"-d")
@@ -1378,6 +1438,7 @@ do
 	    ;;
 	*)
             show_error_message "incorrect option"
+	    exit 1
             ;;
     esac
 done
@@ -1388,7 +1449,10 @@ GSDFILE="$GSDDIR/$GSDLIST.lst"
 # First check that the GSD file exists and is readable
 if [ ! -d $GSDDIR ]; then
     mkdir $GSDDIR
-    [ $? -ne 0 ] && show_error_message "unable to create $GSDDIR"
+    if [ $? -ne 0 ]; then
+	show_error_message "unable to create $GSDDIR"
+	exit 1
+    fi
 fi
 
 if [ -f $GSDCONFIG ]; then
@@ -1436,7 +1500,7 @@ case $ACTION in
         ;;
     "version" | "v")
         show_version
-	exit 0	
+	exit 0
         ;;
 esac
 
@@ -1446,7 +1510,10 @@ esac
 # Check if list exist; if not create it
 if [ ! -f $GSDFILE ]; then
     touch "$GSDFILE"
-    [ $? -ne 0 ] && show_error_message "unable to create $GSDFILE"
+    if [ $? -ne 0 ]; then
+	show_error_message "unable to create $GSDFILE"
+	exit 1
+    fi
 fi
 
 # Check if we have an activated list without the -l
@@ -1459,20 +1526,21 @@ case $ACTION in
     "mail" | "m" | "maillists" | "ml" )
         if (( $# > 2 )); then
 	    show_error_message "$ACTION only requires at most two options"
+	    exit 1
         fi
 
 	if (( $# >= 1 )) && [[ $1 == "-"* ]];  then
 	    set_stype $1
 	    shift
 	fi
-	
+
 	if (( $# > 0 )); then
 	    MAIL_RECIPIENT="$1"
 	    shift
 	fi
-	
+
 	case $ACTION in
-	    "mail" | "m") 
+	    "mail" | "m")
 		mail_entries $STYPE
 		;;
 	    "maillists" | "ml")
@@ -1480,15 +1548,18 @@ case $ACTION in
 		;;
 	    *)
 		show_error_message "fatal"
+		exit 1
+		;;
 	esac
 	;;
-	
+
     "show" | "s" | "showlists" | "sl" | "print" | "pr" | "printlists" | "prl" )
 
 	if (( $# > 0 )); then
 
             if (( $# > 1 )); then
 		show_error_message "$ACTION only requires one option"
+		exit 1
             fi
 
 	    set_stype $1
@@ -1496,7 +1567,7 @@ case $ACTION in
 	fi
 
 	case $ACTION in
-	    "show" | "s") 
+	    "show" | "s")
 		ENTRIES="$(show_entries ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 		;;
@@ -1504,7 +1575,7 @@ case $ACTION in
 		ENTRIES="$(show_entries_all_lists ${STYPE})"
 		[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 		;;
-	    "print" | "pr") 
+	    "print" | "pr")
 		print_entries $STYPE
 		;;
 	    "printlists" | "prl")
@@ -1512,35 +1583,91 @@ case $ACTION in
 		;;
 	    *)
 		show_error_message "fatal"
+		exit 1
 	esac
 	;;
 
     "add" | "a")
+
+	declare -i prepend_date=0
 	
-	(( $# != 1 )) && show_error_message "$ACTION requires <tag>"
+	if (( $# < 1 )); then
+	    show_error_message "$ACTION requires at least one argument"
+	    exit 1
+	fi
+
+	case $1 in
+            "-d")
+		prepend_date=1
+		shift
+		;;
+            "-h")
+		show_usage_message
+		exit 0
+		;;
+            *)
+		break
+		;;
+
+	esac
+    
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires <tag>"
+	    exit 1
+	fi
+	
         # Append new entry
-	add_entry "$1"
+	add_entry "$1" $prepend_date
 	;;
 
     "import" | "im")
-	
-	(( $# != 1 )) && show_error_message "$ACTION requires <file>"
-        # Append new entry
-	import_entries "$1"
-	;;
+
+	if (( $# < 1 )); then
+	    show_error_message "$ACTION requires at least one argument"
+	    exit 1
+	fi
+
+	case $1 in
+            "-d")
+		prepend_date=1
+		shift
+		;;
+            "-h")
+		show_usage_message
+		exit 0
+		;;
+            *)
+		break
+		;;
+
+	esac
     
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires <file>"
+	    exit 1
+	fi
+        # Append new entry
+	import_entries "$1" $prepend_date
+	;;
+
     "delete" | "d")
 
-	(( $# != 1 )) && show_error_message "$ACTION requires <tag>"
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires <tag>"
+	    exit 1
+	fi
 	delete_entry "$1"
 	;;
 
     "status" | "st")
-	(( $# != 2 )) && show_error_message "$ACTION requires <status> <tag>"
+	if (( $# != 2 )); then
+	    show_error_message "$ACTION requires <status> <tag>"
+	    exit 1
+	fi
 
 	STATUS_SYMB=$1
 	TAG=$2
-    
+
 	case $STATUS_SYMB in
             "n"|"N")
 		STATUS="(N)"
@@ -1553,33 +1680,43 @@ case $ACTION in
 		;;
             *)
 		show_error_message "status not specified correctly"
+		exit 1
 		;;
 	esac
 
         # Modify entry
 	modify_entry_status "$STATUS" "$TAG"
-	
+
         # Toggle completed items off
 	[[ $STATUS == "(C)" ]] && toggle_important_flag "$TAG" "off"
 	;;
 
     "flag" | "f")
 
-	(( $# != 1 )) && show_error_message "$ACTION requires <tag-spec>"   
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires <tag-spec>"
+	    exit 1
+	fi
 	toggle_important_flag "$1"
-	
+
 	;;
 
     "edit" | "e")
-     
+
         # Edit entry
-	(( $# == 0 )) && show_error_message "$ACTION requires at least one option"
+	if (( $# == 0 )); then
+	    show_error_message "$ACTION requires at least one option"
+	    exit 1
+	fi
 
 	case $1 in
 
             "-m")
 
-		(( $# != 2 )) && show_error_message "$ACTION $1 requires <tag>"
+		if (( $# != 2 )); then
+		    show_error_message "$ACTION $1 requires <tag>"
+		    exit 1
+		fi
 		TAG=$2
 		modify_entry_statement "$TAG"
 		;;
@@ -1592,11 +1729,12 @@ case $ACTION in
             "-h")
 
 		show_usage_message
+		exit 0
 		;;
 
             *)
-
 		show_error_message "not a valid edit option"
+		exit 1
 		;;
 
 	esac
@@ -1604,21 +1742,30 @@ case $ACTION in
 
     "search" | "se")
 
-	(( $# != 1 )) && show_error_message "$ACTION requires search phrase"
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires search phrase"
+	    exit 1
+	fi
 	ENTRIES="$(search_entries "$1")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
 
     "bump" | "b")
-	
-	(( $# != 2 )) && show_error_message "$ACTION requires two arguments"
+
+	if (( $# != 2 )); then
+	    show_error_message "$ACTION requires two arguments"
+	    exit 1
+	fi
         # Bump entry at tag a to tag b
 	bump_entry "$1" "$2"
 	;;
-    
+
     "purge" | "p")
-	
-	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+
+	if (( $# != 0 )); then
+	    show_error_message "$ACTION takes no arguments"
+	    exit 1
+	fi
         # Purge all entries with status complete
 	purge_completed_entries
 	;;
@@ -1652,27 +1799,37 @@ case $ACTION in
     "lists" | "l")
 
         # Show available lists
-	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
+	if (( $# != 0 )); then
+	    show_error_message "$ACTION takes no arguments"
+	    exit 1
+	fi
 	ENTRIES="$(show_available_lists)"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
-    
+
     "deletelist" | "dl")
 
         # Delete specified list
-	(( $# != 1 )) && show_error_message "$ACTION requires <list>"
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires <list>"
+	    exit 1
+	fi
 	delete_list "$1"
 	;;
 
     "searchlists" | "sel")
-	
-	(( $# != 1 )) && show_error_message "$ACTION requires search phrase"
+
+	if (( $# != 1 )); then
+	    show_error_message "$ACTION requires search phrase"
+	    exit 1
+	fi
+
 	ENTRIES="$(search_entries_all_lists "$1")"
 	[[ ! -z $ENTRIES ]] && echo "$ENTRIES"
 	;;
-    
+
     "purgelists" | "pl")
-	
+
 	(( $# != 0 )) && show_error_message "$ACTION takes no arguments"
         # Purge all entries with status complete
 	purge_completed_entries_all_lists
@@ -1680,10 +1837,10 @@ case $ACTION in
 
     *)
 	show_error_message "no action specified"
+	exit 1
 	;;
-    
-        
-esac
-    
-exit 0
 
+
+esac
+
+exit 0
