@@ -1003,7 +1003,9 @@ function archive_completed_entries {
 
     local _ltype
     local _line
+    local _list="$(basename $GSDFILE .lst)"
     local orig_gsdfile="$GSDFILE"
+
 
     GSDFILE="$ARCHIVE_FILE"
 
@@ -1032,7 +1034,7 @@ function archive_completed_entries {
             fi
 
 	    # Add entry and get new tag from output message
-            local _tag=$(add_entry "$(show_entry_statement "$_line")" | sed -E 's/.*\ ([0-9]+)$/\1/g')
+            local _tag=$(add_entry "[$_list] $(show_entry_statement "$_line")" | sed -E 's/.*\ ([0-9]+)$/\1/g')
 
 	    rc=$?
 	    if [ $rc -eq 0 ] && [ ! -z "$_tag" ]; then
